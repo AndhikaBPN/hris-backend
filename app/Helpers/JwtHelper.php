@@ -1,0 +1,51 @@
+<?php
+
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+use Firebase\JWT\ExpiredException;
+use Firebase\JWT\SignatureInvalidException;
+use Firebase\JWT\BeforeValidException;
+
+class JwtHelper
+{
+    private static int $ttl = 3600; // 1 jam
+
+    private static function secret(): string
+    {
+        return $_ENV['JWT_SECRET'] ?? 'changeme_please';
+    }
+
+    // ----------------------------------------------------------------
+    // Generate token
+    // ----------------------------------------------------------------
+    public static function generate(array $payload): string
+    {
+        $now = time();
+
+        $claims = array_merge($payload, [
+            'iat' => $now,
+            'exp' => $now + self::$ttl,
+        ]);
+
+        return JWT::encode($claims, self::secret(), 'HS256');
+    }
+
+    // ----------------------------------------------------------------
+    // Verify token — return payload array atau false jika tidak valid
+    // ----------------------------------------------------------------
+    public static function verify(string $token): array|false
+    {
+        try {
+            $decoded = JWT::decode($token, new Key(self::secret(), 'HS256'));
+            return (array) $decoded;
+        } catch (ExpiredException $e) {
+            return false; // token kadaluarsa
+        } catch (SignatureInvalidException $e) {
+            return false; // signature salah
+        } catch (BeforeValidException $e) {
+            return false; // token belum berlaku
+        } catch (\Exception $e) {
+            return false; // error lainnya
+        }
+    }
+}
