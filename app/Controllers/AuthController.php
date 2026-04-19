@@ -1,0 +1,49 @@
+<?php
+
+class AuthController
+{
+    private AuthService $service;
+
+    public function __construct(PDO $db)
+    {
+        $this->service = new AuthService($db);
+    }
+
+    // POST /api/login
+    public function login(): void
+    {
+        $body = $this->json();
+
+        $email    = trim($body['email'] ?? '');
+        $password = trim($body['password'] ?? '');
+
+        if (!$email || !$password) {
+            ResponseHelper::error('Email dan password wajib diisi', 422);
+            return;
+        }
+
+        try {
+            $result = $this->service->login($email, $password);
+            ResponseHelper::success($result, 'Login berhasil');
+        } catch (\InvalidArgumentException $e) {
+            ResponseHelper::error($e->getMessage(), 401);
+        } catch (\RuntimeException $e) {
+            ResponseHelper::error($e->getMessage(), 400);
+        }
+    }
+
+    // POST /api/logout
+    public function logout(): void
+    {
+        $headers = getallheaders();
+        $token   = substr($headers['Authorization'] ?? '', 7);
+
+        $this->service->logout($token);
+        ResponseHelper::success(null, 'Logout berhasil');
+    }
+
+    private function json(): array
+    {
+        return json_decode(file_get_contents('php://input'), true) ?? [];
+    }
+}
