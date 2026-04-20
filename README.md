@@ -129,6 +129,11 @@ Gunakan PHP built-in server:
 php -S 127.0.0.1:8000 -t . router.php
 ```
 
+atau
+```bash
+php -S localhost:8000 -t . router.php
+```
+
 API akan tersedia di:
 ```bash
 http://127.0.0.1:8000
@@ -147,25 +152,81 @@ Authorization: Bearer <token>
 
 ## 📂 Project Structure
 ```bash
-project-root/
-│
-├── config/
+├── app
+│   ├── Controllers
+│   │   ├── AttendanceController.php
+│   │   ├── AuthController.php
+│   │   ├── DashboardController.php
+│   │   ├── FaceEmbeddingController.php
+│   │   ├── LeaveController.php
+│   │   ├── ProfileController.php
+│   │   ├── ReportController.php
+│   │   ├── ShiftController.php
+│   │   └── UserController.php
+│   ├── Helpers
+│   │   ├── JwtHelper.php
+│   │   ├── ResponseHelper.php
+│   │   └── ValidationHelper.php
+│   ├── Middleware
+│   │   ├── AuthMiddleware.php
+│   │   └── RoleMiddleware.php
+│   ├── Models
+│   │   ├── Attendance.php
+│   │   ├── AttendanceLog.php
+│   │   ├── FaceEmbedding.php
+│   │   ├── LeaveBalance.php
+│   │   ├── LeaveRequest.php
+│   │   ├── OfficeLocation.php
+│   │   ├── PasswordReset.php
+│   │   ├── Shift.php
+│   │   ├── ShiftSchedule.php
+│   │   ├── TokenBlacklist.php
+│   │   └── User.php
+│   └── Services
+│       ├── AttendanceService.php
+│       ├── AuthService.php
+│       ├── DashboardService.php
+│       ├── FaceEmbeddingService.php
+│       ├── LeaveService.php
+│       ├── ProfileService.php
+│       ├── ReportService.php
+│       ├── ShiftService.php
+│       └── UserService.php
+├── config
 │   └── database.php
-│
-├── database/
-│   └── migrations/
-│
-├── middleware/
-├── controllers/
-├── services/
-│
-├── bootstrap.php
-├── migrate.php
-├── index.php
-│
-├── .env
+├── database
+│   └── migrations
+│       ├── 001_create_users.sql
+│       ├── 002_create_face_embeddings.sql
+│       ├── 003_create_office_locations.sql
+│       ├── 004_create_shifts.sql
+│       ├── 005_create_shift_schedules.sql
+│       ├── 006_create_attendance.sql
+│       ├── 007_create_attendance_logs.sql
+│       ├── 008_create_leave_requests.sql
+│       ├── 009_create_leave_balances.sql
+│       ├── 010_create_indexes.sql
+│       ├── 011_seed_shifts.sql
+│       ├── 012_seed_superadmin.sql
+│       ├── 013_create_password_resets.sql
+│       └── 014_create_token_blacklists.sql
+├── docs
+│   ├── flow.md
+│   ├── hris.md
+│   ├── hris_architecture_v2.md
+│   └── uml_diagrams.md
+├── routes
+│   └── api.php
+├── .env.example
 ├── .gitignore
-└── README.md
+├── README.md
+├── bootstrap.php
+├── composer.json
+├── db_reset.php
+├── index.php
+├── launch.json
+├── migrate.php
+└── router.php
 ```
 
 ---
