@@ -124,9 +124,14 @@ php migrate.php
 ```
 
 ### 5. Run project
-Gunakan XAMPP / Apache:
+Gunakan PHP built-in server:
 ```bash
-http://localhost/your-project-folder
+php -S 127.0.0.1:8000 -t . router.php
+```
+
+API akan tersedia di:
+```bash
+http://127.0.0.1:8000
 ```
 
 ---
