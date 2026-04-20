@@ -76,9 +76,9 @@ class LeaveService
     public function getList(int $userId, string $role, array $filters = []): array
     {
         if (in_array($role, ['c_level', 'hrd_manager', 'technical_manager'])) {
-            return $this->leaveModel->getAll();
+            return $this->leaveModel->getAll($filters);
         }
-        return $this->leaveModel->getByUserId($userId);
+        return $this->leaveModel->getByUserId($userId, $filters);
     }
 
     public function getRemainingQuota(int $userId): int

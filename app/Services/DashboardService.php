@@ -20,10 +20,15 @@ class DashboardService
     public function adminSummary(): array
     {
         $today = date('Y-m-d');
-        // Simple counts mockup for summary
-        $totalUsers = count($this->userModel->all(['is_active' => 1]));
-        $attendanceToday = count($this->attendanceModel->getAll(['date' => $today]));
-        $leaves = $this->leaveModel->getAll();
+        
+        $usersRes = $this->userModel->all(['is_active' => 1]);
+        $totalUsers = count($usersRes['data'] ?? []);
+        
+        $attRes = $this->attendanceModel->getAll(['date' => $today]);
+        $attendanceToday = count($attRes['data'] ?? []);
+        
+        $leavesRes = $this->leaveModel->getAll();
+        $leaves = $leavesRes['data'] ?? [];
         
         $pendingLeaves = array_filter($leaves, fn($l) => $l['status'] === 'pending');
 
@@ -37,12 +42,14 @@ class DashboardService
     public function teamLeaderSummary(int $userId): array
     {
         $today = date('Y-m-d');
-        // Anggap data yang dikembalikan difilter by departemen atau manager_id
-        // Untuk mock-up ini, kita pass global dengan asumsi kita akan memfilter di query
-        $myTeam = array_filter($this->userModel->all(), fn($u) => $u['manager_id'] == $userId);
+        
+        $usersRes = $this->userModel->all();
+        $myTeam = array_filter($usersRes['data'] ?? [], fn($u) => $u['manager_id'] == $userId);
         $myTeamIds = array_column($myTeam, 'id');
 
-        $attendanceAll = $this->attendanceModel->getAll(['date' => $today]);
+        $attRes = $this->attendanceModel->getAll(['date' => $today]);
+        $attendanceAll = $attRes['data'] ?? [];
+        
         $teamAttendance = array_filter($attendanceAll, fn($a) => in_array($a['user_id'], $myTeamIds));
 
         return [

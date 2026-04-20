@@ -45,12 +45,13 @@ class AttendanceController
     public function index(): void
     {
         $authUser = $GLOBALS['auth_user'];
-        $data     = $this->service->getHistory(
+        $filters  = $_GET ?? [];
+        $result   = $this->service->getHistory(
             (int) $authUser['id'],
             $authUser['role'],
-            $_GET ?? []
+            $filters
         );
-        ResponseHelper::success($data);
+        ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
     }
 
     private function json(): array

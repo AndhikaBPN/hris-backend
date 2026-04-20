@@ -2,6 +2,13 @@
 
 class AuthMiddleware
 {
+    private PDO $db;
+
+    public function __construct(PDO $db)
+    {
+        $this->db = $db;
+    }
+
     /**
      * Validasi JWT dari Authorization header.
      * Return payload jika valid, atau kirim 401 dan exit.
@@ -15,7 +22,14 @@ class AuthMiddleware
             self::unauthorized('Token not provided');
         }
 
-        $token   = substr($auth, 7);
+        $token = substr($auth, 7);
+        
+        // Pengecekan Blacklist Logout
+        $blacklist = new TokenBlacklist($this->db);
+        if ($blacklist->isBlacklisted($token)) {
+            self::unauthorized('Token has been revoked/logged out');
+        }
+
         $payload = JwtHelper::verify($token);
 
         if (!$payload) {

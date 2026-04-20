@@ -12,12 +12,15 @@ class UserService
     /** Ambil semua user (dengan filter opsional). */
     public function getAll(array $filters = []): array
     {
-        $users = $this->userModel->all($filters);
-        // Clean out password hash from response
-        return array_map(function($user) {
+        $result = $this->userModel->all($filters);
+        
+        // Clean out password hash from response data array
+        $result['data'] = array_map(function($user) {
             unset($user['password']);
             return $user;
-        }, $users);
+        }, $result['data']);
+
+        return $result;
     }
 
     /** Buat user baru. Hash password sebelum simpan. */

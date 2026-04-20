@@ -32,8 +32,7 @@ class Attendance
 
     public function getByUserId(int $userId, array $filters = []): array
     {
-        $sql = "SELECT a.*, ss.date as shift_date
-                FROM attendance a
+        $sql = "FROM attendance a
                 JOIN shift_schedules ss ON a.shift_schedule_id = ss.id
                 WHERE a.user_id = :user_id";
         
@@ -44,17 +43,44 @@ class Attendance
             $params['date'] = $filters['date'];
         }
 
-        $sql .= " ORDER BY a.check_in_time DESC";
+        // Cek jika bypass pagination (untuk method getToday atau operasi backend lain)
+        $isPaginated = isset($filters['page']) || isset($filters['limit']);
 
-        $stmt = $this->db->prepare($sql);
+        if (!$isPaginated) {
+            $sqlData = "SELECT a.*, ss.date as shift_date " . $sql . " ORDER BY a.check_in_time DESC";
+            $stmt = $this->db->prepare($sqlData);
+            $stmt->execute($params);
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['data' => $data, 'meta' => null];
+        }
+
+        $countStmt = $this->db->prepare("SELECT COUNT(a.id) as total " . $sql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $page = isset($filters['page']) ? max(1, (int)$filters['page']) : 1;
+        $limit = isset($filters['limit']) ? max(1, (int)$filters['limit']) : 10;
+        $offset = ($page - 1) * $limit;
+        $lastPage = ceil($total / $limit);
+
+        $sqlData = "SELECT a.*, ss.date as shift_date " . $sql . " ORDER BY a.check_in_time DESC LIMIT $limit OFFSET $offset";
+        $stmt = $this->db->prepare($sqlData);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'data' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'meta' => [
+                'current_page'  => $page,
+                'last_page'     => (int)$lastPage,
+                'per_page'      => $limit,
+                'total_records' => $total
+            ]
+        ];
     }
 
     public function getAll(array $filters = []): array
     {
-        $sql = "SELECT a.*, ss.date as shift_date, u.name as user_name 
-                FROM attendance a
+        $sql = "FROM attendance a
                 JOIN shift_schedules ss ON a.shift_schedule_id = ss.id
                 JOIN users u ON a.user_id = u.id
                 WHERE 1=1";
@@ -65,15 +91,43 @@ class Attendance
             $params['date'] = $filters['date'];
         }
 
-        $sql .= " ORDER BY a.check_in_time DESC";
+        $isPaginated = isset($filters['page']) || isset($filters['limit']);
 
-        $stmt = $this->db->prepare($sql);
+        if (!$isPaginated) {
+            $sqlData = "SELECT a.*, ss.date as shift_date, u.name as user_name " . $sql . " ORDER BY a.check_in_time DESC";
+            $stmt = $this->db->prepare($sqlData);
+            $stmt->execute($params);
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['data' => $data, 'meta' => null];
+        }
+
+        $countStmt = $this->db->prepare("SELECT COUNT(a.id) as total " . $sql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $page = isset($filters['page']) ? max(1, (int)$filters['page']) : 1;
+        $limit = isset($filters['limit']) ? max(1, (int)$filters['limit']) : 10;
+        $offset = ($page - 1) * $limit;
+        $lastPage = ceil($total / $limit);
+
+        $sqlData = "SELECT a.*, ss.date as shift_date, u.name as user_name " . $sql . " ORDER BY a.check_in_time DESC LIMIT $limit OFFSET $offset";
+        $stmt = $this->db->prepare($sqlData);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'data' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'meta' => [
+                'current_page'  => $page,
+                'last_page'     => (int)$lastPage,
+                'per_page'      => $limit,
+                'total_records' => $total
+            ]
+        ];
     }
 
     public function todayByUserId(int $userId): array
     {
-        return $this->getByUserId($userId, ['date' => date('Y-m-d')]);
+        $res = $this->getByUserId($userId, ['date' => date('Y-m-d')]);
+        return $res['data'] ?? [];
     }
 }

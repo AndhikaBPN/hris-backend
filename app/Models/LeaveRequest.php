@@ -34,17 +34,76 @@ class LeaveRequest
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function getByUserId(int $userId): array
+    public function getByUserId(int $userId, array $filters = []): array
     {
-        $stmt = $this->db->prepare("SELECT * FROM leave_requests WHERE user_id = :user_id ORDER BY leave_date DESC");
-        $stmt->execute(['user_id' => $userId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $sql = "FROM leave_requests WHERE user_id = :user_id";
+        $params = ['user_id' => $userId];
+
+        $isPaginated = isset($filters['page']) || isset($filters['limit']);
+
+        if (!$isPaginated) {
+            $stmt = $this->db->prepare("SELECT * " . $sql . " ORDER BY leave_date DESC");
+            $stmt->execute($params);
+            return ['data' => $stmt->fetchAll(PDO::FETCH_ASSOC), 'meta' => null];
+        }
+
+        $countStmt = $this->db->prepare("SELECT COUNT(id) as total " . $sql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $page = isset($filters['page']) ? max(1, (int)$filters['page']) : 1;
+        $limit = isset($filters['limit']) ? max(1, (int)$filters['limit']) : 10;
+        $offset = ($page - 1) * $limit;
+        $lastPage = ceil($total / $limit);
+
+        $stmt = $this->db->prepare("SELECT * " . $sql . " ORDER BY leave_date DESC LIMIT $limit OFFSET $offset");
+        $stmt->execute($params);
+
+        return [
+            'data' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'meta' => [
+                'current_page'  => $page,
+                'last_page'     => (int)$lastPage,
+                'per_page'      => $limit,
+                'total_records' => $total
+            ]
+        ];
     }
 
-    public function getAll(): array
+    public function getAll(array $filters = []): array
     {
-        $stmt = $this->db->query("SELECT lr.*, u.name as user_name FROM leave_requests lr JOIN users u ON lr.user_id = u.id ORDER BY lr.leave_date DESC");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $sql = "FROM leave_requests lr JOIN users u ON lr.user_id = u.id";
+        $params = [];
+
+        $isPaginated = isset($filters['page']) || isset($filters['limit']);
+
+        if (!$isPaginated) {
+            $stmt = $this->db->prepare("SELECT lr.*, u.name as user_name " . $sql . " ORDER BY lr.leave_date DESC");
+            $stmt->execute($params);
+            return ['data' => $stmt->fetchAll(PDO::FETCH_ASSOC), 'meta' => null];
+        }
+
+        $countStmt = $this->db->prepare("SELECT COUNT(lr.id) as total " . $sql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $page = isset($filters['page']) ? max(1, (int)$filters['page']) : 1;
+        $limit = isset($filters['limit']) ? max(1, (int)$filters['limit']) : 10;
+        $offset = ($page - 1) * $limit;
+        $lastPage = ceil($total / $limit);
+
+        $stmt = $this->db->prepare("SELECT lr.*, u.name as user_name " . $sql . " ORDER BY lr.leave_date DESC LIMIT $limit OFFSET $offset");
+        $stmt->execute($params);
+
+        return [
+            'data' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'meta' => [
+                'current_page'  => $page,
+                'last_page'     => (int)$lastPage,
+                'per_page'      => $limit,
+                'total_records' => $total
+            ]
+        ];
     }
 
     public function updateStatus(int $id, string $status, int $approvedBy): bool

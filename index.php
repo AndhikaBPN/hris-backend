@@ -40,8 +40,10 @@ foreach ($routes as [$routeMethod, $pattern, $controllerName, $action, $allowedR
 
     // Require auth jika route tidak public
     $payload = [];
+    $db      = (new Database())->getConnection();
+
     if (!empty($allowedRoles)) {
-        $auth    = new AuthMiddleware();
+        $auth    = new AuthMiddleware($db);
         $payload = $auth->handle();
         RoleMiddleware::require($payload, $allowedRoles);
     }
@@ -51,7 +53,6 @@ foreach ($routes as [$routeMethod, $pattern, $controllerName, $action, $allowedR
 
     // Panggil controller
     require_once __DIR__ . "/app/Controllers/{$controllerName}.php";
-    $db         = (new Database())->getConnection();
     $controller = new $controllerName($db);
     call_user_func_array([$controller, $action], $matches);
     exit;

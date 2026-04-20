@@ -19,7 +19,12 @@ class ReportService
      */
     public function attendanceReport(array $filters = []): array
     {
-        $data = $this->attendanceModel->getAll($filters);
+        // Untuk report biasanya kita butuh semua, jadi injeksi override limit
+        $filters['limit'] = $filters['limit'] ?? 10000;
+        
+        $res = $this->attendanceModel->getAll($filters);
+        $data = $res['data'] ?? [];
+        
         // Bisa diformat tambah nama kolom spesifik jika perlu
         return [
             'report_type'  => 'Attendance',
@@ -31,7 +36,10 @@ class ReportService
 
     public function leaveReport(array $filters = []): array
     {
-        $data = $this->leaveModel->getAll();
+        $filters['limit'] = $filters['limit'] ?? 10000;
+
+        $res = $this->leaveModel->getAll($filters);
+        $data = $res['data'] ?? [];
         
         if (!empty($filters['status'])) {
             $data = array_filter($data, fn($d) => $d['status'] === $filters['status']);

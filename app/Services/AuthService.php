@@ -3,10 +3,12 @@
 class AuthService
 {
     private User $userModel;
+    private TokenBlacklist $tokenBlacklist;
 
     public function __construct(PDO $db)
     {
         $this->userModel = new User($db);
+        $this->tokenBlacklist = new TokenBlacklist($db);
     }
 
     /**
@@ -50,13 +52,15 @@ class AuthService
     }
 
     /**
-     * Invalidate token.
-     * Untuk stateless JWT, biasanya dibiarkan kedaluwarsa atau disimpan ke blacklist table.
-     * Di implementasi ini kita tidak menggunakan tabel blacklist demi menjaga API stateless,
-     * implementasi logout akan membuang token saja dari sisi klien.
+     * Invalidate token dengan memasukannya ke blacklist table.
      */
     public function logout(string $token): void
     {
-        // Optional: Implement table token_blacklists logic jika benar-benar harus mati di backend
+        if ($token) {
+            // Hindari duplikasi jika sudah di-blacklist
+            if (!$this->tokenBlacklist->isBlacklisted($token)) {
+                $this->tokenBlacklist->add($token);
+            }
+        }
     }
 }

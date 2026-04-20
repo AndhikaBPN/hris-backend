@@ -13,8 +13,8 @@ class UserController
     public function index(): void
     {
         $filters = $_GET ?? [];
-        $data    = $this->service->getAll($filters);
-        ResponseHelper::success($data);
+        $result  = $this->service->getAll($filters);
+        ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
     }
 
     // POST /api/users

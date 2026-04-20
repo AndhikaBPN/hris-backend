@@ -32,12 +32,13 @@ class LeaveController
     public function index(): void
     {
         $authUser = $GLOBALS['auth_user'];
-        $data     = $this->service->getList(
+        $filters  = $_GET ?? [];
+        $result   = $this->service->getList(
             (int) $authUser['id'],
             $authUser['role'],
-            $_GET ?? []
+            $filters
         );
-        ResponseHelper::success($data);
+        ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
     }
 
     // PUT /api/leave/{id}/approve

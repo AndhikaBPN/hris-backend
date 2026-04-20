@@ -14,7 +14,7 @@ class AuthController
     {
         $body = $this->json();
 
-        $email    = trim($body['email'] ?? '');
+        $email = trim($body['email'] ?? '');
         $password = trim($body['password'] ?? '');
 
         if (!$email || !$password) {
@@ -29,6 +29,8 @@ class AuthController
             ResponseHelper::error($e->getMessage(), 401);
         } catch (\RuntimeException $e) {
             ResponseHelper::error($e->getMessage(), 400);
+        } catch (\Exception $e) {
+            ResponseHelper::error($e->getMessage(), 500);
         }
     }
 
@@ -36,7 +38,7 @@ class AuthController
     public function logout(): void
     {
         $headers = getallheaders();
-        $token   = substr($headers['Authorization'] ?? '', 7);
+        $token = substr($headers['Authorization'] ?? '', 7);
 
         $this->service->logout($token);
         ResponseHelper::success(null, 'Logout berhasil');

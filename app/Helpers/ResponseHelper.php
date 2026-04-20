@@ -2,13 +2,19 @@
 
 class ResponseHelper
 {
-    public static function success(mixed $data = null, string $message = 'OK', int $code = 200): void
+    public static function success(mixed $data = null, string $message = 'OK', int $code = 200, ?array $meta = null): void
     {
-        self::json([
+        $body = [
             'success' => true,
             'message' => $message,
             'data'    => $data,
-        ], $code);
+        ];
+        
+        if ($meta !== null) {
+            $body['meta'] = $meta;
+        }
+
+        self::json($body, $code);
     }
 
     public static function error(string $message = 'Error', int $code = 400, mixed $errors = null): void

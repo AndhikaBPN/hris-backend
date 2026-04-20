@@ -68,7 +68,7 @@ class User
 
     public function all(array $filters = []): array
     {
-        $sql = "SELECT * FROM users WHERE 1=1";
+        $sql = "FROM users WHERE 1=1";
         $params = [];
 
         if (isset($filters['role'])) {
@@ -81,8 +81,31 @@ class User
             $params['is_active'] = $filters['is_active'];
         }
 
-        $stmt = $this->db->prepare($sql);
+        // Hitung total data
+        $countStmt = $this->db->prepare("SELECT COUNT(id) as total " . $sql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        // Pagination parameters
+        $page = isset($filters['page']) ? max(1, (int)$filters['page']) : 1;
+        $limit = isset($filters['limit']) ? max(1, (int)$filters['limit']) : 10;
+        $offset = ($page - 1) * $limit;
+
+        $lastPage = ceil($total / $limit);
+
+        $sqlData = "SELECT * " . $sql . " ORDER BY id DESC LIMIT $limit OFFSET $offset";
+        $stmt = $this->db->prepare($sqlData);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'data' => $data,
+            'meta' => [
+                'current_page'  => $page,
+                'last_page'     => (int)$lastPage,
+                'per_page'      => $limit,
+                'total_records' => $total
+            ]
+        ];
     }
 }

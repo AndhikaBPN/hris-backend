@@ -63,4 +63,10 @@ return [
     // ----------------------------------------------------------------
     ['GET', '/api/profile', 'ProfileController', 'show',   ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['PUT', '/api/profile', 'ProfileController', 'update', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+
+    // ----------------------------------------------------------------
+    // Face Recognition Setup
+    // ----------------------------------------------------------------
+    ['GET',  '/api/face-embeddings', 'FaceEmbeddingController', 'show',  ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['POST', '/api/face-embeddings', 'FaceEmbeddingController', 'store', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
 ];
