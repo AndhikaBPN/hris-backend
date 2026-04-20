@@ -3,7 +3,7 @@
     "type": "php",
     "request": "launch",
     "runtimeArgs": [
-        "-S", "localhost:8888", "-t", "."
+        "-S", "127.0.0.1:8000", "-t", ".", "router.php"
     ],
     "noDebug": true, // <-- disable debugging
     "profile": true // <-- enable profiling
