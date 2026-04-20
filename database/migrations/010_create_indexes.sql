@@ -3,7 +3,8 @@
 -- =========================================================
 
 CREATE INDEX IF NOT EXISTS idx_users_email           ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_role            ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_role_id         ON users(role_id);
+CREATE INDEX IF NOT EXISTS idx_users_team_id         ON users(team_id);
 
 CREATE INDEX IF NOT EXISTS idx_schedule_user_date    ON shift_schedules(user_id, date);
 CREATE INDEX IF NOT EXISTS idx_schedule_date         ON shift_schedules(date);
