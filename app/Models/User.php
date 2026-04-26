@@ -11,30 +11,36 @@ class User
 
     public function findByEmail(string $email): array|false
     {
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
+        $stmt = $this->db->prepare($this->baseSelect() . " WHERE u.email = :email LIMIT 1");
         $stmt->execute(['email' => $email]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function findById(int $id): array|false
     {
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE id = :id LIMIT 1");
+        $stmt = $this->db->prepare($this->baseSelect() . " WHERE u.id = :id LIMIT 1");
         $stmt->execute(['id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function create(array $data): int|false
     {
-        $sql = "INSERT INTO users (name, email, password, role, is_active, manager_id) 
-                VALUES (:name, :email, :password, :role, :is_active, :manager_id)";
+        if (!isset($data['role_id']) && isset($data['role'])) {
+            $data['role_id'] = $this->findRoleId($data['role']);
+        }
+        unset($data['role']);
+
+        $sql = "INSERT INTO users (name, email, password, role_id, is_active, manager_id, team_id)
+                VALUES (:name, :email, :password, :role_id, :is_active, :manager_id, :team_id)";
         $stmt = $this->db->prepare($sql);
         $success = $stmt->execute([
             'name'       => $data['name'],
             'email'      => $data['email'],
             'password'   => $data['password'],
-            'role'       => $data['role'],
+            'role_id'    => $data['role_id'] ?? null,
             'is_active'  => $data['is_active'] ?? 1,
-            'manager_id' => $data['manager_id'] ?? null
+            'manager_id' => $data['manager_id'] ?? null,
+            'team_id'    => $data['team_id'] ?? null,
         ]);
 
         return $success ? (int) $this->db->lastInsertId() : false;
@@ -42,6 +48,11 @@ class User
 
     public function update(int $id, array $data): bool
     {
+        if (!isset($data['role_id']) && isset($data['role'])) {
+            $data['role_id'] = $this->findRoleId($data['role']);
+        }
+        unset($data['role']);
+
         // Menyusun query update dinamis sesuai dengan data yang dioper
         $fields = [];
         $params = ['id' => $id];
@@ -60,6 +71,7 @@ class User
         return $stmt->execute($params);
     }
 
+
     public function delete(int $id): bool
     {
         $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
@@ -68,21 +80,31 @@ class User
 
     public function all(array $filters = []): array
     {
-        $sql = "FROM users WHERE 1=1";
+        $sql = "FROM users u LEFT JOIN `role` r ON u.role_id = r.id WHERE 1=1";
         $params = [];
 
         if (isset($filters['role'])) {
-            $sql .= " AND role = :role";
+            $sql .= " AND r.role = :role";
             $params['role'] = $filters['role'];
         }
 
+        if (isset($filters['role_id'])) {
+            $sql .= " AND u.role_id = :role_id";
+            $params['role_id'] = $filters['role_id'];
+        }
+
+        if (isset($filters['team_id'])) {
+            $sql .= " AND u.team_id = :team_id";
+            $params['team_id'] = $filters['team_id'];
+        }
+
         if (isset($filters['is_active'])) {
-            $sql .= " AND is_active = :is_active";
+            $sql .= " AND u.is_active = :is_active";
             $params['is_active'] = $filters['is_active'];
         }
 
         // Hitung total data
-        $countStmt = $this->db->prepare("SELECT COUNT(id) as total " . $sql);
+        $countStmt = $this->db->prepare("SELECT COUNT(u.id) as total " . $sql);
         $countStmt->execute($params);
         $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
@@ -93,7 +115,7 @@ class User
 
         $lastPage = ceil($total / $limit);
 
-        $sqlData = "SELECT * " . $sql . " ORDER BY id DESC LIMIT $limit OFFSET $offset";
+        $sqlData = $this->baseSelectColumns() . " " . $sql . " ORDER BY u.id DESC LIMIT $limit OFFSET $offset";
         $stmt = $this->db->prepare($sqlData);
         $stmt->execute($params);
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -107,5 +129,24 @@ class User
                 'total_records' => $total
             ]
         ];
+    }
+
+    private function baseSelect(): string
+    {
+        return $this->baseSelectColumns() . " FROM users u LEFT JOIN `role` r ON u.role_id = r.id";
+    }
+
+    private function baseSelectColumns(): string
+    {
+        return "SELECT u.id, u.name, u.email, u.password, u.role_id, r.role, u.is_active, u.manager_id, u.team_id, u.created_at, u.updated_at";
+    }
+
+    private function findRoleId(string $role): ?int
+    {
+        $stmt = $this->db->prepare("SELECT id FROM `role` WHERE role = :role LIMIT 1");
+        $stmt->execute(['role' => $role]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ? (int) $row['id'] : null;
     }
 }

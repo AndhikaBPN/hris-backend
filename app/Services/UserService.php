@@ -26,7 +26,7 @@ class UserService
     /** Buat user baru. Hash password sebelum simpan. */
     public function create(array $data): int
     {
-        if (empty($data['email']) || empty($data['password']) || empty($data['role'])) {
+        if (empty($data['email']) || empty($data['password']) || (empty($data['role']) && empty($data['role_id']))) {
             throw new \InvalidArgumentException('Data tidak lengkap (email, password, role)');
         }
 
