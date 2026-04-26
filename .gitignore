@@ -48,11 +48,10 @@ public/uploads/
 # =========================
 test.php
 debug.php
-/tests/
-*.xml.dist
 
 # =========================
 # OS / MISC
 # =========================
 *.bak
 *.old
+.agents
