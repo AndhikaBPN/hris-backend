@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/bootstrap.php';
 
 echo "===========================================\n";
 echo " HRIS Attendance - Database Migration\n";
