@@ -13,6 +13,23 @@ class ShiftController
     public function index(): void
     {
         $authUser = $GLOBALS['auth_user'];
+        $date     = $_GET['date'] ?? null;
+
+        if ($date !== null && $date !== '') {
+            try {
+                $shift = $this->service->getShiftFinal((int) $authUser['id'], $date);
+                ResponseHelper::success([
+                    'shift_name' => $shift['shift_name'],
+                    'start_time' => $shift['start_time'],
+                    'end_time'   => $shift['end_time'],
+                    'is_day_off' => $shift['is_day_off'],
+                ]);
+            } catch (\InvalidArgumentException $e) {
+                ResponseHelper::error($e->getMessage(), 422);
+            }
+            return;
+        }
+
         $fromDate = $_GET['from_date'] ?? date('Y-m-01');
         $toDate   = $_GET['to_date'] ?? date('Y-m-t');
 
@@ -43,6 +60,28 @@ class ShiftController
         }
     }
 
+    // POST /api/shifts/setup (Setup awal rotasi shift - HRD only)
+    public function setup(): void
+    {
+        $body = $this->json();
+        $startDate = $body['start_date'] ?? '';
+        $users = $body['users'] ?? [];
+
+        if ($startDate === '' || !is_array($users)) {
+            ResponseHelper::error('start_date dan users wajib diisi', 422);
+            return;
+        }
+
+        try {
+            $data = $this->service->setupInitialShifts($startDate, $users);
+            ResponseHelper::success($data, 'Setup awal shift berhasil disimpan');
+        } catch (\InvalidArgumentException $e) {
+            ResponseHelper::error($e->getMessage(), 422);
+        } catch (\RuntimeException $e) {
+            ResponseHelper::error($e->getMessage(), 400);
+        }
+    }
+
     // POST /api/shifts/override (Override jadwal manual - HRD only)
     public function override(): void
     {
@@ -54,12 +93,14 @@ class ShiftController
         }
 
         try {
+            $authUser = $GLOBALS['auth_user'];
             $this->service->overrideSchedule(
                 (int) $body['user_id'],
                 $body['date'],
                 isset($body['shift_id']) ? (int) $body['shift_id'] : null,
                 (bool) ($body['is_day_off'] ?? false),
-                $body['notes'] ?? ''
+                $body['notes'] ?? '',
+                isset($authUser['id']) ? (int) $authUser['id'] : null
             );
             ResponseHelper::success(null, 'Jadwal berhasil di-override');
         } catch (\RuntimeException $e) {

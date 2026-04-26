@@ -16,6 +16,13 @@ class Shift
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function findByName(string $name): array|false
+    {
+        $stmt = $this->db->prepare("SELECT * FROM shifts WHERE LOWER(name) = LOWER(:name) LIMIT 1");
+        $stmt->execute(['name' => $name]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     public function all(): array
     {
         $stmt = $this->db->query("SELECT * FROM shifts ORDER BY id ASC");
