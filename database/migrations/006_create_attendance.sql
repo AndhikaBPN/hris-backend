@@ -23,7 +23,9 @@ CREATE TABLE IF NOT EXISTS attendance (
     distance_to_office  FLOAT NULL,
     status              ENUM('valid', 'late', 'invalid') NOT NULL,
     check_in_time       TIMESTAMP NOT NULL,
+    check_out_time      TIMESTAMP NULL,
     created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     UNIQUE KEY uq_attendance_session (user_id, shift_schedule_id, session),
 
