@@ -2,33 +2,33 @@
 
 class AttendanceService
 {
-    private Attendance      $attendanceModel;
-    private ShiftSchedule   $scheduleModel;
-    private FaceEmbedding   $faceModel;
-    private OfficeLocation  $officeModel;
+    private Attendance $attendanceModel;
+    private ShiftSchedule $scheduleModel;
+    private FaceEmbedding $faceModel;
+    private OfficeLocation $officeModel;
 
     private AttendanceLog $logModel;
 
     public function __construct(PDO $db)
     {
         $this->attendanceModel = new Attendance($db);
-        $this->scheduleModel   = new ShiftSchedule($db);
-        $this->faceModel       = new FaceEmbedding($db);
-        $this->officeModel     = new OfficeLocation($db);
-        $this->logModel        = new AttendanceLog($db);
+        $this->scheduleModel = new ShiftSchedule($db);
+        $this->faceModel = new FaceEmbedding($db);
+        $this->officeModel = new OfficeLocation($db);
+        $this->logModel = new AttendanceLog($db);
     }
 
     public function clockIn(
-        int    $userId,
-        int    $session,
-        array  $faceData,
-        float  $latitude,
-        float  $longitude,
+        int $userId,
+        int $session,
+        array $faceData,
+        float $latitude,
+        float $longitude,
         string $faceImage = ''
     ): array {
         $todayStr = date('Y-m-d');
         $schedules = $this->scheduleModel->getByUserId($userId, ['date' => $todayStr]);
-        
+
         if (empty($schedules) || $schedules[0]['is_day_off']) {
             $msg = 'Tidak ada jadwal shift aktif hari ini atau hari libur';
             $this->logModel->create(['user_id' => $userId, 'session' => $session, 'message' => "Fail: $msg"]);
@@ -66,14 +66,14 @@ class AttendanceService
 
         // 4. Save
         $attId = $this->attendanceModel->create([
-            'user_id'            => $userId,
-            'shift_schedule_id'  => $schedule['id'],
-            'session'            => $session,
-            'face_image'         => $faceImage,
-            'latitude'           => $latitude,
-            'longitude'          => $longitude,
+            'user_id' => $userId,
+            'shift_schedule_id' => $schedule['id'],
+            'session' => $session,
+            'face_image' => $faceImage,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
             'distance_to_office' => $distance,
-            'status'             => $status
+            'status' => $status
         ]);
 
         $this->logModel->create(['attendance_id' => $attId, 'user_id' => $userId, 'session' => $session, 'message' => "Success: Clock in session $session - $status"]);
@@ -130,9 +130,9 @@ class AttendanceService
         $dLon = deg2rad($lon2 - $lon1);
 
         $a = sin($dLat / 2) * sin($dLat / 2) +
-             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-             sin($dLon / 2) * sin($dLon / 2);
-        
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon / 2) * sin($dLon / 2);
+
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         return $earthRadius * $c;
     }

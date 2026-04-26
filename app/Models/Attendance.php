@@ -13,20 +13,20 @@ class Attendance
     {
         $sql = "INSERT INTO attendance (user_id, shift_schedule_id, session, face_image, latitude, longitude, distance_to_office, status, check_in_time) 
                 VALUES (:user_id, :shift_schedule_id, :session, :face_image, :latitude, :longitude, :distance_to_office, :status, :check_in_time)";
-                
+
         $stmt = $this->db->prepare($sql);
         $success = $stmt->execute([
-            'user_id'            => $data['user_id'],
-            'shift_schedule_id'  => $data['shift_schedule_id'],
-            'session'            => $data['session'],
-            'face_image'         => $data['face_image'] ?? null,
-            'latitude'           => $data['latitude'] ?? null,
-            'longitude'          => $data['longitude'] ?? null,
+            'user_id' => $data['user_id'],
+            'shift_schedule_id' => $data['shift_schedule_id'],
+            'session' => $data['session'],
+            'face_image' => $data['face_image'] ?? null,
+            'latitude' => $data['latitude'] ?? null,
+            'longitude' => $data['longitude'] ?? null,
             'distance_to_office' => $data['distance_to_office'] ?? null,
-            'status'             => $data['status'],
-            'check_in_time'      => $data['check_in_time'] ?? date('Y-m-d H:i:s')
+            'status' => $data['status'],
+            'check_in_time' => $data['check_in_time'] ?? date('Y-m-d H:i:s')
         ]);
-        
+
         return $success ? (int) $this->db->lastInsertId() : false;
     }
 
@@ -35,7 +35,7 @@ class Attendance
         $sql = "FROM attendance a
                 JOIN shift_schedules ss ON a.shift_schedule_id = ss.id
                 WHERE a.user_id = :user_id";
-        
+
         $params = ['user_id' => $userId];
 
         if (!empty($filters['date'])) {
@@ -58,8 +58,8 @@ class Attendance
         $countStmt->execute($params);
         $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        $page = isset($filters['page']) ? max(1, (int)$filters['page']) : 1;
-        $limit = isset($filters['limit']) ? max(1, (int)$filters['limit']) : 10;
+        $page = isset($filters['page']) ? max(1, (int) $filters['page']) : 1;
+        $limit = isset($filters['limit']) ? max(1, (int) $filters['limit']) : 10;
         $offset = ($page - 1) * $limit;
         $lastPage = ceil($total / $limit);
 
@@ -70,9 +70,9 @@ class Attendance
         return [
             'data' => $stmt->fetchAll(PDO::FETCH_ASSOC),
             'meta' => [
-                'current_page'  => $page,
-                'last_page'     => (int)$lastPage,
-                'per_page'      => $limit,
+                'current_page' => $page,
+                'last_page' => (int) $lastPage,
+                'per_page' => $limit,
                 'total_records' => $total
             ]
         ];
@@ -105,8 +105,8 @@ class Attendance
         $countStmt->execute($params);
         $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        $page = isset($filters['page']) ? max(1, (int)$filters['page']) : 1;
-        $limit = isset($filters['limit']) ? max(1, (int)$filters['limit']) : 10;
+        $page = isset($filters['page']) ? max(1, (int) $filters['page']) : 1;
+        $limit = isset($filters['limit']) ? max(1, (int) $filters['limit']) : 10;
         $offset = ($page - 1) * $limit;
         $lastPage = ceil($total / $limit);
 
@@ -117,9 +117,9 @@ class Attendance
         return [
             'data' => $stmt->fetchAll(PDO::FETCH_ASSOC),
             'meta' => [
-                'current_page'  => $page,
-                'last_page'     => (int)$lastPage,
-                'per_page'      => $limit,
+                'current_page' => $page,
+                'last_page' => (int) $lastPage,
+                'per_page' => $limit,
                 'total_records' => $total
             ]
         ];

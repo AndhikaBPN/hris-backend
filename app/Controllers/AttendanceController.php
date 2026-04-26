@@ -13,11 +13,11 @@ class AttendanceController
     public function store(): void
     {
         $authUser = $GLOBALS['auth_user'];
-        $body     = $this->json();
+        $body = $this->json();
 
-        $session   = (int) ($body['session'] ?? 0);
-        $faceData  = $body['face_embedding'] ?? [];
-        $latitude  = (float) ($body['latitude'] ?? 0);
+        $session = (int) ($body['session'] ?? 0);
+        $faceData = $body['face_embedding'] ?? [];
+        $latitude = (float) ($body['latitude'] ?? 0);
         $longitude = (float) ($body['longitude'] ?? 0);
         $faceImage = $body['face_image'] ?? '';
 
@@ -45,8 +45,8 @@ class AttendanceController
     public function index(): void
     {
         $authUser = $GLOBALS['auth_user'];
-        $filters  = $_GET ?? [];
-        $result   = $this->service->getHistory(
+        $filters = $_GET ?? [];
+        $result = $this->service->getHistory(
             (int) $authUser['id'],
             $authUser['role'],
             $filters
