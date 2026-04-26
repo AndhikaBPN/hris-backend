@@ -25,6 +25,24 @@ return [
     ['DELETE', '/api/users/{id}', 'UserController', 'destroy', ['c_level']],
 
     // ----------------------------------------------------------------
+    // Team Management
+    // ----------------------------------------------------------------
+    ['GET',    '/api/teams',      'TeamController', 'index',   ['c_level', 'hrd_manager', 'technical_manager']],
+    ['GET',    '/api/teams/{id}', 'TeamController', 'show',    ['c_level', 'hrd_manager', 'technical_manager']],
+    ['POST',   '/api/teams',      'TeamController', 'store',   ['c_level', 'hrd_manager', 'technical_manager']],
+    ['PUT',    '/api/teams/{id}', 'TeamController', 'update',  ['c_level', 'hrd_manager', 'technical_manager']],
+    ['DELETE', '/api/teams/{id}', 'TeamController', 'destroy', ['c_level', 'hrd_manager', 'technical_manager']],
+
+    // ----------------------------------------------------------------
+    // Role Management
+    // ----------------------------------------------------------------
+    ['GET',    '/api/roles',      'RoleController', 'index',   ['c_level', 'hrd_manager']],
+    ['GET',    '/api/roles/{id}', 'RoleController', 'show',    ['c_level', 'hrd_manager']],
+    ['POST',   '/api/roles',      'RoleController', 'store',   ['c_level', 'hrd_manager']],
+    ['PUT',    '/api/roles/{id}', 'RoleController', 'update',  ['c_level', 'hrd_manager']],
+    ['DELETE', '/api/roles/{id}', 'RoleController', 'destroy', ['c_level', 'hrd_manager']],
+
+    // ----------------------------------------------------------------
     // Attendance
     // ----------------------------------------------------------------
     ['POST', '/api/attendance', 'AttendanceController', 'store', ['hrd_manager', 'technical_manager', 'team_leader', 'staff']],
@@ -42,8 +60,11 @@ return [
     // Shift Schedules
     // ----------------------------------------------------------------
     ['GET',  '/api/shifts',             'ShiftController', 'index',    ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['POST', '/api/shifts/setup',       'ShiftController', 'setup',    ['hrd_manager']],
     ['POST', '/api/shifts/generate',    'ShiftController', 'generate', ['hrd_manager']],
     ['POST', '/api/shifts/override',    'ShiftController', 'override', ['hrd_manager']],
+    ['POST', '/api/users/{id}/shift-config', 'ShiftConfigController', 'store', ['c_level', 'hrd_manager']],
+    ['GET',  '/api/users/{id}/shift-config', 'ShiftConfigController', 'show',  ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
 
     // ----------------------------------------------------------------
     // Dashboard
