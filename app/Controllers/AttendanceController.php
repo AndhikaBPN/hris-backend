@@ -22,7 +22,7 @@ class AttendanceController
         $faceImage = $body['face_image'] ?? '';
 
         if (!in_array($session, [1, 2], true)) {
-            ResponseHelper::error('Session harus 1 atau 2', 422);
+            ResponseHelper::error('Session must be 1 or 2', 422);
             return;
         }
 
@@ -35,7 +35,7 @@ class AttendanceController
                 $longitude,
                 $faceImage
             );
-            ResponseHelper::success($result, 'Absensi berhasil dicatat', 201);
+            ResponseHelper::success($result, 'Attendance recorded successfully', 201);
         } catch (\RuntimeException $e) {
             ResponseHelper::error($e->getMessage(), 400);
         }

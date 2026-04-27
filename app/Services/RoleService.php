@@ -18,7 +18,7 @@ class RoleService
     {
         $role = $this->roleModel->findById($id);
         if (!$role) {
-            throw new \InvalidArgumentException('Role tidak ditemukan');
+            throw new \InvalidArgumentException('Role not found');
         }
 
         return $role;
@@ -28,16 +28,16 @@ class RoleService
     {
         $role = trim((string) ($data['role'] ?? ''));
         if ($role === '') {
-            throw new \InvalidArgumentException('role wajib diisi');
+            throw new \InvalidArgumentException('role is required');
         }
 
         if ($this->roleModel->findByName($role)) {
-            throw new \InvalidArgumentException('Role sudah ada');
+            throw new \InvalidArgumentException('Role already exists');
         }
 
         $id = $this->roleModel->create(['role' => $role]);
         if (!$id) {
-            throw new \RuntimeException('Gagal membuat role');
+            throw new \RuntimeException('Failed to create role');
         }
 
         return $id;
@@ -47,17 +47,17 @@ class RoleService
     {
         $existingRole = $this->roleModel->findById($id);
         if (!$existingRole) {
-            throw new \InvalidArgumentException('Role tidak ditemukan');
+            throw new \InvalidArgumentException('Role not found');
         }
 
         $role = trim((string) ($data['role'] ?? ''));
         if ($role === '') {
-            throw new \InvalidArgumentException('role wajib diisi');
+            throw new \InvalidArgumentException('role is required');
         }
 
         $existing = $this->roleModel->findByName($role);
         if ($existing && (int) $existing['id'] !== $id) {
-            throw new \InvalidArgumentException('Role sudah ada');
+            throw new \InvalidArgumentException('Role already exists');
         }
 
         return $this->roleModel->update($id, ['role' => $role]);
@@ -66,7 +66,7 @@ class RoleService
     public function delete(int $id): bool
     {
         if (!$this->roleModel->findById($id)) {
-            throw new \InvalidArgumentException('Role tidak ditemukan');
+            throw new \InvalidArgumentException('Role not found');
         }
 
         return $this->roleModel->delete($id);

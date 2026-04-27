@@ -1,25 +1,25 @@
 # HRIS Attendance System (Web-Based)
 
-Sistem HRIS (Human Resource Information System) berbasis web yang berfokus pada fitur absensi karyawan menggunakan:
+A web-based Human Resource Information System (HRIS) focused on employee attendance tracking using:
 
 - Face Recognition (biometric verification)
-- Geo-Tagging (validasi lokasi)
+- Geo-Tagging (location validation)
 
 ---
 
 ## 📌 Overview
 
-Aplikasi ini dirancang untuk:
-- Mencegah kecurangan absensi (fake presence / titip absen)
-- Memverifikasi identitas pengguna melalui wajah
-- Memastikan lokasi pengguna berada dalam radius kantor
+This application is designed to:
+- Prevent attendance fraud (fake presence / proxy attendance)
+- Verify user identity through facial recognition
+- Ensure user location is within the office radius
 
 ---
 
 ## 🚀 Tech Stack
 
 ### Backend
-- PHP Native (no framework)
+- Native PHP (no framework)
 - REST API (JSON)
 - JWT Authentication
 
@@ -51,19 +51,19 @@ Aplikasi ini dirancang untuk:
 - Anti-fraud system
 
 ### 📝 Leave Management
-- Submit leave
+- Submit leave requests
 - Approve / reject leave
 - Leave history
 
 ### 📊 Dashboard
-- Admin: overall stats
+- Admin: overall statistics
 - Manager: team overview
 - Staff: personal summary
 
-### 📄 Report
-- Attendance report
-- Leave report
-- Export (PDF / Excel)
+### 📄 Reporting
+- Attendance reports
+- Leave reports
+- Data Export (PDF / Excel)
 
 ---
 
@@ -71,18 +71,18 @@ Aplikasi ini dirancang untuk:
 
 ### Face Recognition
 - Model: face-api.js
-- Output: 128-dimension embedding vector
+- Output: 128-dimensional embedding vector
 - Matching: Euclidean Distance
 - Threshold:
   - `< 0.5` → match
-  - `>= 0.5` → not match
+  - `>= 0.5` → no match
 
 ### Geo Validation
 - API: navigator.geolocation
 - Formula: Haversine
 - Threshold:
-  - ≤ 50 meter → valid
-  - > 50 meter → invalid
+  - ≤ 50 meters → valid
+  - > 50 meters → invalid
 
 ---
 
@@ -100,41 +100,41 @@ Main tables:
 
 ## ⚙️ Installation
 
-### 1. Clone project
+### 1. Clone Project
 ```bash
 git clone <your-repo-url>
 cd project-name
 ```
 
-### 2. Install dependency
+### 2. Install Dependencies
 ```bash
 composer install
 ```
 
-### 3. Setup environment
+### 3. Environment Setup
 ```bash
 cp .env.example .env
 ```
-Lalu edit sesuai kebutuhan.
+Then edit as needed.
 
-### 4. Setup database
-Jalankan migration:
+### 4. Database Setup
+Run migrations:
 ```bash
 php migrate.php
 ```
 
-### 5. Run project
-Gunakan PHP built-in server:
+### 5. Run Project
+Using PHP built-in server:
 ```bash
 php -S 127.0.0.1:8000 -t . router.php
 ```
 
-atau
+or
 ```bash
 php -S localhost:8000 -t . router.php
 ```
 
-API akan tersedia di:
+API will be available at:
 ```bash
 http://127.0.0.1:8000
 ```
@@ -143,12 +143,12 @@ http://127.0.0.1:8000
 
 ## 🔐 Authentication Flow
 #### 1. User login → receive JWT
-#### 2. Token disimpan di client
-#### 3. Request API menggunakan header:
+#### 2. Token is stored on the client-side
+#### 3. API Requests using header:
 ```bash
 Authorization: Bearer <token>
 ```
-#### 4. Backend validate token
+#### 4. Backend validates token
 
 ## 📂 Project Structure
 ```bash
@@ -232,9 +232,9 @@ Authorization: Bearer <token>
 ---
 
 ## ⚠️ Constraints
-- No framework (Laravel, etc)
+- No framework (Laravel, etc.)
 - No ML training
-- Use pretrained model only
+- Use pre-trained models only
 - Lightweight architecture
 
 ---
@@ -256,5 +256,5 @@ Authorization: Bearer <token>
 
 ---
 
-👨‍💻 Author
+👨‍💻 **Author**
 - Andhika

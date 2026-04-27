@@ -37,11 +37,11 @@ class ShiftService
     public function setupInitialShifts(string $startDate, array $users): array
     {
         if (!$this->isValidDate($startDate)) {
-            throw new \InvalidArgumentException('start_date harus format YYYY-MM-DD');
+            throw new \InvalidArgumentException('start_date must be in YYYY-MM-DD format');
         }
 
         if ($users === []) {
-            throw new \InvalidArgumentException('users wajib diisi');
+            throw new \InvalidArgumentException('users is required');
         }
 
         $updatedUsers = [];
@@ -54,16 +54,16 @@ class ShiftService
                 $startIndex = $item['start_index'] ?? null;
 
                 if ($userId <= 0) {
-                    throw new \InvalidArgumentException('user_id wajib diisi');
+                    throw new \InvalidArgumentException('user_id is required');
                 }
 
                 if (!is_numeric($startIndex) || (int) $startIndex < 0 || (int) $startIndex > 7) {
-                    throw new \InvalidArgumentException("start_index untuk user_id {$userId} harus 0-7");
+                    throw new \InvalidArgumentException("start_index for user_id {$userId} must be 0-7");
                 }
 
                 $user = $this->userModel->findById($userId);
                 if (!$user) {
-                    throw new \InvalidArgumentException("User dengan id {$userId} tidak ditemukan");
+                    throw new \InvalidArgumentException("User with id {$userId} not found");
                 }
 
                 $normalizedStartIndex = (int) $startIndex;
@@ -99,7 +99,7 @@ class ShiftService
     {
         $config = $this->configModel->findByUserId($userId);
         if (!$config) {
-            throw new \InvalidArgumentException('User belum memiliki konfigurasi shift (shift_start_date)');
+            throw new \InvalidArgumentException('User does not have a shift configuration (shift_start_date)');
         }
 
         $startDate = $config['shift_start_date'];
@@ -125,7 +125,7 @@ class ShiftService
 
         $user = $this->userModel->findById($userId);
         if (!$user) {
-            throw new \InvalidArgumentException('User tidak ditemukan');
+            throw new \InvalidArgumentException('User not found');
         }
 
         return $this->getShift($userId, $date);
@@ -150,7 +150,7 @@ class ShiftService
     {
         $user = $this->userModel->findById($userId);
         if (!$user) {
-            throw new \InvalidArgumentException('User tidak ditemukan');
+            throw new \InvalidArgumentException('User not found');
         }
 
         $currentDate = new \DateTime($startDate);

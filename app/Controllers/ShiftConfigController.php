@@ -17,7 +17,7 @@ class ShiftConfigController
         // Hanya hrd_manager dan c_level yang boleh mengatur rotasi
         $authUser = $GLOBALS['auth_user'];
         if (!in_array($authUser['role'], ['hrd_manager', 'c_level'])) {
-            ResponseHelper::error('Akses ditolak. Hanya HRD atau C-Level yang boleh mengatur rotasi.', 403);
+            ResponseHelper::error('Access denied. Only HRD or C-Level can configure rotations.', 403);
             return;
         }
 
@@ -26,7 +26,7 @@ class ShiftConfigController
         $startIndex = $body['shift_start_index'] ?? 0;
 
         if (!$startDate) {
-            ResponseHelper::error('shift_start_date wajib diisi', 422);
+            ResponseHelper::error('shift_start_date is required', 422);
             return;
         }
 
@@ -37,7 +37,7 @@ class ShiftConfigController
                     'start_index' => $startIndex
                 ]
             ]);
-            ResponseHelper::success($result[0], 'Konfigurasi shift berhasil disimpan', 200);
+            ResponseHelper::success($result[0], 'Shift configuration saved successfully', 200);
         } catch (\Exception $e) {
             ResponseHelper::error($e->getMessage(), 400);
         }
@@ -48,7 +48,7 @@ class ShiftConfigController
     {
         $config = $this->model->findByUserId($id);
         if (!$config) {
-            ResponseHelper::error('Konfigurasi shift tidak ditemukan untuk user ini', 404);
+            ResponseHelper::error('Shift configuration not found for this user', 404);
             return;
         }
 

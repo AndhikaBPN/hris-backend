@@ -27,7 +27,7 @@ class ProfileController
         if (isset($body['face_embeddings'])) {
             try {
                 $this->service->updateFaceData((int) $authUser['id'], $body['face_embeddings']);
-                ResponseHelper::success(null, 'Data wajah berhasil diperbarui');
+                ResponseHelper::success(null, 'Face data updated successfully');
             } catch (\RuntimeException $e) {
                 ResponseHelper::error($e->getMessage(), 400);
             }
@@ -37,7 +37,7 @@ class ProfileController
         // Update profil biasa
         try {
             $this->service->updateProfile((int) $authUser['id'], $body);
-            ResponseHelper::success(null, 'Profil berhasil diperbarui');
+            ResponseHelper::success(null, 'Profile updated successfully');
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
         } catch (\RuntimeException $e) {
@@ -52,14 +52,14 @@ class ProfileController
         $email = trim($body['email'] ?? '');
 
         if (!$email) {
-            ResponseHelper::error('Email wajib diisi', 422);
+            ResponseHelper::error('Email is required', 422);
             return;
         }
 
         $this->service->requestOtp($email);
         
         // Walau email tidak terdaftar, tetap kasih response sukses demi security audit (pencegahan user-enumeration)
-        ResponseHelper::success(null, 'Jika email terdaftar, kode OTP telah dikirim melalui email.');
+        ResponseHelper::success(null, 'If the email is registered, an OTP code has been sent.');
     }
 
     // POST /api/password/reset
@@ -71,13 +71,13 @@ class ProfileController
         $newPw = trim($body['new_password'] ?? '');
 
         if (!$email || !$otp || !$newPw) {
-            ResponseHelper::error('Email, OTP, dan password baru wajib diisi', 422);
+            ResponseHelper::error('Email, OTP, and new password are required', 422);
             return;
         }
 
         try {
             $this->service->verifyOtpAndChangePassword($email, $otp, $newPw);
-            ResponseHelper::success(null, 'Password berhasil diubah. Silakan login kembali.');
+            ResponseHelper::success(null, 'Password changed successfully. Please log in again.');
         } catch (\RuntimeException $e) {
             ResponseHelper::error($e->getMessage(), 400);
         }

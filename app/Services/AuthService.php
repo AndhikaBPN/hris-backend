@@ -20,33 +20,33 @@ class AuthService
         $user = $this->userModel->findByEmail($email);
 
         if (!$user) {
-            throw new \InvalidArgumentException('Email atau password salah');
+            throw new \InvalidArgumentException('Invalid email or password');
         }
 
-        if (!(bool)$user['is_active']) {
-            throw new \InvalidArgumentException('Akun Anda tidak aktif');
+        if (!(bool) $user['is_active']) {
+            throw new \InvalidArgumentException('Your account is not active');
         }
 
         if (!password_verify($password, $user['password'])) {
-            throw new \InvalidArgumentException('Email atau password salah');
+            throw new \InvalidArgumentException('Invalid email or password');
         }
 
         // Generate JWT token
         $payload = [
-            'id'    => $user['id'],
+            'id' => $user['id'],
             'email' => $user['email'],
-            'role'  => $user['role']
+            'role' => $user['role']
         ];
-        
+
         $token = JwtHelper::generate($payload);
 
         return [
             'token' => $token,
-            'user'  => [
-                'id'    => $user['id'],
-                'name'  => $user['name'],
+            'user' => [
+                'id' => $user['id'],
+                'name' => $user['name'],
                 'email' => $user['email'],
-                'role'  => $user['role'],
+                'role' => $user['role'],
             ]
         ];
     }

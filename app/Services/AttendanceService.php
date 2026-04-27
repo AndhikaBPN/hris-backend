@@ -30,7 +30,7 @@ class AttendanceService
         $schedules = $this->scheduleModel->getByUserId($userId, ['date' => $todayStr]);
 
         if (empty($schedules) || $schedules[0]['is_day_off']) {
-            $msg = 'Tidak ada jadwal shift aktif hari ini atau hari libur';
+            $msg = 'No active shift schedule today or it is a day off';
             $this->logModel->create(['user_id' => $userId, 'session' => $session, 'message' => "Fail: $msg"]);
             throw new \RuntimeException($msg);
         }
@@ -41,7 +41,7 @@ class AttendanceService
         $existing = $this->attendanceModel->getByUserId($userId, ['date' => $todayStr]);
         foreach ($existing as $att) {
             if ($att['session'] == $session) {
-                $msg = "Anda sudah melakukan absen untuk session $session hari ini";
+                $msg = "You have already clocked in for session $session today";
                 $this->logModel->create(['user_id' => $userId, 'session' => $session, 'message' => "Fail: $msg"]);
                 throw new \RuntimeException($msg);
             }
@@ -50,15 +50,15 @@ class AttendanceService
         // 1. Validasi Wajah (Euclidean Distance <= 0.5)
         $isFaceValid = $this->validateFace($userId, $faceData);
         if (!$isFaceValid) {
-            $this->logModel->create(['user_id' => $userId, 'session' => $session, 'message' => 'Fail: Wajah tidak dikenali']);
-            throw new \RuntimeException('Wajah tidak dikenali');
+            $this->logModel->create(['user_id' => $userId, 'session' => $session, 'message' => 'Fail: Face not recognized']);
+            throw new \RuntimeException('Face not recognized');
         }
 
         // 2. Validasi Jarak (Haversine <= 50 meter)
         $distance = $this->calculateDistanceToOffice($latitude, $longitude);
         if ($distance > 50) {
-            $this->logModel->create(['user_id' => $userId, 'session' => $session, 'message' => "Fail: Jarak di luar radius ($distance meter)"]);
-            throw new \RuntimeException("Radius lokasi Anda melebihi batas 50m ($distance meter)");
+            $this->logModel->create(['user_id' => $userId, 'session' => $session, 'message' => "Fail: Distance outside radius ($distance meters)"]);
+            throw new \RuntimeException("Your location radius exceeds the 50m limit ($distance meters)");
         }
 
         // 3. Tentukan status valid/late

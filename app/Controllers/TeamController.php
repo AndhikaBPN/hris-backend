@@ -30,7 +30,7 @@ class TeamController
     {
         try {
             $id = $this->service->create($this->json());
-            ResponseHelper::success(['id' => $id], 'Team berhasil dibuat', 201);
+            ResponseHelper::success(['id' => $id], 'Team created successfully', 201);
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
         } catch (\RuntimeException $e) {
@@ -43,7 +43,7 @@ class TeamController
     {
         try {
             $this->service->update($id, $this->json());
-            ResponseHelper::success(null, 'Team berhasil diupdate');
+            ResponseHelper::success(null, 'Team updated successfully');
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
         } catch (\RuntimeException $e) {
@@ -56,7 +56,7 @@ class TeamController
     {
         try {
             $this->service->delete($id);
-            ResponseHelper::success(null, 'Team berhasil dihapus');
+            ResponseHelper::success(null, 'Team deleted successfully');
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 404);
         } catch (\RuntimeException $e) {

@@ -22,7 +22,7 @@ class UserController
     {
         try {
             $id = $this->service->create($this->json());
-            ResponseHelper::success(['id' => $id], 'User berhasil dibuat', 201);
+            ResponseHelper::success(['id' => $id], 'User created successfully', 201);
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
         } catch (\RuntimeException $e) {
@@ -35,7 +35,7 @@ class UserController
     {
         try {
             $this->service->update($id, $this->json());
-            ResponseHelper::success(null, 'User berhasil diupdate');
+            ResponseHelper::success(null, 'User updated successfully');
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
         } catch (\RuntimeException $e) {
@@ -48,7 +48,7 @@ class UserController
     {
         try {
             $this->service->delete($id);
-            ResponseHelper::success(null, 'User berhasil dihapus');
+            ResponseHelper::success(null, 'User deleted successfully');
         } catch (\RuntimeException $e) {
             ResponseHelper::error($e->getMessage(), 400);
         }

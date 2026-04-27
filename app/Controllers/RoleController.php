@@ -30,7 +30,7 @@ class RoleController
     {
         try {
             $id = $this->service->create($this->json());
-            ResponseHelper::success(['id' => $id], 'Role berhasil dibuat', 201);
+            ResponseHelper::success(['id' => $id], 'Role created successfully', 201);
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
         } catch (\RuntimeException $e) {
@@ -43,7 +43,7 @@ class RoleController
     {
         try {
             $this->service->update($id, $this->json());
-            ResponseHelper::success(null, 'Role berhasil diupdate');
+            ResponseHelper::success(null, 'Role updated successfully');
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
         } catch (\RuntimeException $e) {
@@ -56,7 +56,7 @@ class RoleController
     {
         try {
             $this->service->delete($id);
-            ResponseHelper::success(null, 'Role berhasil dihapus');
+            ResponseHelper::success(null, 'Role deleted successfully');
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 404);
         } catch (\RuntimeException $e) {

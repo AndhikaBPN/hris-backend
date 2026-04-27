@@ -18,7 +18,7 @@ class TeamService
     {
         $team = $this->teamModel->findById($id);
         if (!$team) {
-            throw new \InvalidArgumentException('Team tidak ditemukan');
+            throw new \InvalidArgumentException('Team not found');
         }
 
         return $team;
@@ -28,16 +28,16 @@ class TeamService
     {
         $teamName = trim((string) ($data['team_name'] ?? ''));
         if ($teamName === '') {
-            throw new \InvalidArgumentException('team_name wajib diisi');
+            throw new \InvalidArgumentException('team_name is required');
         }
 
         if ($this->teamModel->findByName($teamName)) {
-            throw new \InvalidArgumentException('Team sudah ada');
+            throw new \InvalidArgumentException('Team already exists');
         }
 
         $id = $this->teamModel->create(['team_name' => $teamName]);
         if (!$id) {
-            throw new \RuntimeException('Gagal membuat team');
+            throw new \RuntimeException('Failed to create team');
         }
 
         return $id;
@@ -47,17 +47,17 @@ class TeamService
     {
         $team = $this->teamModel->findById($id);
         if (!$team) {
-            throw new \InvalidArgumentException('Team tidak ditemukan');
+            throw new \InvalidArgumentException('Team not found');
         }
 
         $teamName = trim((string) ($data['team_name'] ?? ''));
         if ($teamName === '') {
-            throw new \InvalidArgumentException('team_name wajib diisi');
+            throw new \InvalidArgumentException('team_name is required');
         }
 
         $existing = $this->teamModel->findByName($teamName);
         if ($existing && (int) $existing['id'] !== $id) {
-            throw new \InvalidArgumentException('Team sudah ada');
+            throw new \InvalidArgumentException('Team already exists');
         }
 
         return $this->teamModel->update($id, ['team_name' => $teamName]);
@@ -66,7 +66,7 @@ class TeamService
     public function delete(int $id): bool
     {
         if (!$this->teamModel->findById($id)) {
-            throw new \InvalidArgumentException('Team tidak ditemukan');
+            throw new \InvalidArgumentException('Team not found');
         }
 
         return $this->teamModel->delete($id);

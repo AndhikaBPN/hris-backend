@@ -20,7 +20,7 @@ class LeaveController
                 $authUser['role'],
                 $this->json()
             );
-            ResponseHelper::success(['id' => $id], 'Pengajuan cuti berhasil', 201);
+            ResponseHelper::success(['id' => $id], 'Leave request submitted successfully', 201);
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
         } catch (\RuntimeException $e) {
@@ -48,7 +48,7 @@ class LeaveController
 
         try {
             $this->service->approve($id, (int) $authUser['id'], $authUser['role']);
-            ResponseHelper::success(null, 'Cuti berhasil diapprove');
+            ResponseHelper::success(null, 'Leave request approved successfully');
         } catch (\RuntimeException $e) {
             ResponseHelper::error($e->getMessage(), 400);
         }
@@ -61,7 +61,7 @@ class LeaveController
 
         try {
             $this->service->reject($id, (int) $authUser['id'], $authUser['role']);
-            ResponseHelper::success(null, 'Cuti berhasil direject');
+            ResponseHelper::success(null, 'Leave request rejected successfully');
         } catch (\RuntimeException $e) {
             ResponseHelper::error($e->getMessage(), 400);
         }

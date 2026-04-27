@@ -57,12 +57,12 @@ class ProfileService
     {
         $user = $this->userModel->findByEmail($email);
         if (!$user) {
-            throw new \RuntimeException('Email atau OTP tidak valid');
+            throw new \RuntimeException('Invalid email or OTP');
         }
 
         $isValid = $this->otpModel->verify($email, $otpCode);
         if (!$isValid) {
-            throw new \RuntimeException('OTP tidak valid atau sudah kedaluwarsa');
+            throw new \RuntimeException('OTP is invalid or has expired');
         }
 
         // Jika valid, ganti password

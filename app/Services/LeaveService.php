@@ -24,18 +24,18 @@ class LeaveService
     public function submit(int $userId, string $role, array $data): int
     {
         if ($role === 'c_level') {
-            throw new \RuntimeException('C-Level tidak perlu mengajukan cuti lewat sistem');
+            throw new \RuntimeException('C-Level does not need to apply for leave through the system');
         }
 
         $leaveType = $data['leave_type'] ?? 'annual';
         if ($leaveType === 'sick' && empty($data['doctor_letter'])) {
-            throw new \InvalidArgumentException('Surat dokter wajib diunggah untuk absen sakit');
+            throw new \InvalidArgumentException('Doctor\'s letter must be uploaded for sick leave');
         }
 
         if ($leaveType === 'annual') {
             $quota = $this->getRemainingQuota($userId);
             if ($quota <= 0) {
-                throw new \RuntimeException('Kuota cuti tahunan Anda sudah habis bulan ini');
+                throw new \RuntimeException('Your annual leave quota for this month has been exhausted');
             }
         }
 
@@ -47,13 +47,13 @@ class LeaveService
     {
         $leave = $this->leaveModel->findById($leaveId);
         if (!$leave) {
-            throw new \RuntimeException('Data cuti tidak ditemukan');
+            throw new \RuntimeException('Leave request data not found');
         }
 
         // Cek wewenang
         // Ini adalah bypass simpel sesuai role matriks: C-Level approve manager, HRD approve staff
         if (in_array($approverRole, ['staff', 'team_leader'])) {
-            throw new \RuntimeException('Anda tidak memiliki wewenang menyetujui cuti');
+            throw new \RuntimeException('You do not have the authority to approve leave');
         }
 
         $this->leaveModel->updateStatus($leaveId, 'approved', $approverId);

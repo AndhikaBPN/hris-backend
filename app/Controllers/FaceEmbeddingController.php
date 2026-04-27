@@ -15,7 +15,7 @@ class FaceEmbeddingController
         $authUser = $GLOBALS['auth_user'];
         $data = $this->service->getEmbedding((int) $authUser['id']);
         
-        ResponseHelper::success($data, 'Berhasil memuat face data');
+        ResponseHelper::success($data, 'Face data loaded successfully');
     }
 
     // POST /api/face-embeddings
@@ -26,13 +26,13 @@ class FaceEmbeddingController
 
         $embeddings = $body['embeddings'] ?? null;
         if (!$embeddings || !is_array($embeddings)) {
-            ResponseHelper::error('Format embedding matrix wajah tidak valid', 422);
+            ResponseHelper::error('Invalid face embedding matrix format', 422);
             return;
         }
 
         try {
             $this->service->saveEmbedding((int) $authUser['id'], $embeddings);
-            ResponseHelper::success(null, 'Face Embedding berhasil disimpan');
+            ResponseHelper::success(null, 'Face embedding saved successfully');
         } catch (\Exception $e) {
             ResponseHelper::error($e->getMessage(), 500);
         }

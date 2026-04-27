@@ -18,13 +18,13 @@ class AuthController
         $password = trim($body['password'] ?? '');
 
         if (!$email || !$password) {
-            ResponseHelper::error('Email dan password wajib diisi', 422);
+            ResponseHelper::error('Email and password are required', 422);
             return;
         }
 
         try {
             $result = $this->service->login($email, $password);
-            ResponseHelper::success($result, 'Login berhasil');
+            ResponseHelper::success($result, 'Login successful');
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 401);
         } catch (\RuntimeException $e) {
@@ -41,7 +41,7 @@ class AuthController
         $token = substr($headers['Authorization'] ?? '', 7);
 
         $this->service->logout($token);
-        ResponseHelper::success(null, 'Logout berhasil');
+        ResponseHelper::success(null, 'Logout successful');
     }
 
     private function json(): array

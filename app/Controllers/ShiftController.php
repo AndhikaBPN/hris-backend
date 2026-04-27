@@ -43,7 +43,7 @@ class ShiftController
         $body = $this->json();
         
         if (empty($body['user_id']) || empty($body['role']) || empty($body['start_date'])) {
-            ResponseHelper::error('user_id, role, dan start_date wajib diisi', 422);
+            ResponseHelper::error('user_id, role, and start_date are required', 422);
             return;
         }
 
@@ -54,7 +54,7 @@ class ShiftController
                 $body['start_date'],
                 (int) ($body['days'] ?? 30)
             );
-            ResponseHelper::success(null, 'Jadwal shift berhasil di-generate', 201);
+            ResponseHelper::success(null, 'Shift schedule generated successfully', 201);
         } catch (\RuntimeException $e) {
             ResponseHelper::error($e->getMessage(), 400);
         }
@@ -68,13 +68,13 @@ class ShiftController
         $users = $body['users'] ?? [];
 
         if ($startDate === '' || !is_array($users)) {
-            ResponseHelper::error('start_date dan users wajib diisi', 422);
+            ResponseHelper::error('start_date and users are required', 422);
             return;
         }
 
         try {
             $data = $this->service->setupInitialShifts($startDate, $users);
-            ResponseHelper::success($data, 'Setup awal shift berhasil disimpan');
+            ResponseHelper::success($data, 'Initial shift setup saved successfully');
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
         } catch (\RuntimeException $e) {
@@ -88,7 +88,7 @@ class ShiftController
         $body = $this->json();
 
         if (empty($body['user_id']) || empty($body['date'])) {
-            ResponseHelper::error('user_id dan date wajib diisi', 422);
+            ResponseHelper::error('user_id and date are required', 422);
             return;
         }
 
@@ -102,7 +102,7 @@ class ShiftController
                 $body['notes'] ?? '',
                 isset($authUser['id']) ? (int) $authUser['id'] : null
             );
-            ResponseHelper::success(null, 'Jadwal berhasil di-override');
+            ResponseHelper::success(null, 'Schedule overridden successfully');
         } catch (\RuntimeException $e) {
             ResponseHelper::error($e->getMessage(), 400);
         }
