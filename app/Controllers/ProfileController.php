@@ -13,7 +13,7 @@ class ProfileController
     public function show(): void
     {
         $authUser = $GLOBALS['auth_user'];
-        $data     = $this->service->getProfile((int) $authUser['id']);
+        $data = $this->service->getProfile((int) $authUser['id']);
         ResponseHelper::success($data);
     }
 
@@ -21,7 +21,7 @@ class ProfileController
     public function update(): void
     {
         $authUser = $GLOBALS['auth_user'];
-        $body     = $this->json();
+        $body = $this->json();
 
         // Jika request update face data
         if (isset($body['face_embeddings'])) {
@@ -45,33 +45,22 @@ class ProfileController
         }
     }
 
-    // POST /api/password/forgot
-    public function forgotPassword(): void
-    {
-        $body  = $this->json();
-        $email = trim($body['email'] ?? '');
-
-        if (!$email) {
-            ResponseHelper::error('Email is required', 422);
-            return;
-        }
-
-        $this->service->requestOtp($email);
-        
-        // Walau email tidak terdaftar, tetap kasih response sukses demi security audit (pencegahan user-enumeration)
-        ResponseHelper::success(null, 'If the email is registered, an OTP code has been sent.');
-    }
-
     // POST /api/password/reset
     public function resetPassword(): void
     {
-        $body  = $this->json();
+        $body = $this->json();
         $email = trim($body['email'] ?? '');
-        $otp   = trim($body['otp_code'] ?? '');
+        $otp = trim($body['otp_code'] ?? '');
         $newPw = trim($body['new_password'] ?? '');
+        $confirm = trim($body['new_password_confirmation'] ?? '');
 
-        if (!$email || !$otp || !$newPw) {
-            ResponseHelper::error('Email, OTP, and new password are required', 422);
+        if (!$email || !$otp || !$newPw || !$confirm) {
+            ResponseHelper::error('Email, OTP, password, and confirmation are required', 422);
+            return;
+        }
+
+        if ($newPw !== $confirm) {
+            ResponseHelper::error('Password confirmation does not match', 422);
             return;
         }
 

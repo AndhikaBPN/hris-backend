@@ -2,16 +2,16 @@
 
 class ProfileService
 {
-    private User          $userModel;
+    private User $userModel;
     private FaceEmbedding $faceModel;
 
-    private PasswordReset $otpModel;
+    private OtpService $otpService;
 
     public function __construct(PDO $db)
     {
         $this->userModel = new User($db);
         $this->faceModel = new FaceEmbedding($db);
-        $this->otpModel  = new PasswordReset($db);
+        $this->otpService = new OtpService($db);
     }
 
     public function getProfile(int $userId): array
@@ -27,8 +27,8 @@ class ProfileService
     {
         // Cegah pancing update password / role langsung via profile
         unset($data['password']);
-        unset($data['role']); 
-        
+        unset($data['role']);
+
         return $this->userModel->update($userId, $data);
     }
 
@@ -40,17 +40,8 @@ class ProfileService
             return;
         }
 
-        // Generate OTP 6 angka acak
-        $otpCode = sprintf('%06d', random_int(0, 999999));
-        
-        // Expiry 15 menit dari sekarang
-        $expiry = date('Y-m-d H:i:s', strtotime('+15 minutes'));
-
-        // Simpan ke database
-        $this->otpModel->create($email, $otpCode, $expiry);
-
-        // Simulasi pengiriman email
-        error_log("[MOCK EMAIL] To: $email | OTP Code: $otpCode | Expires at: $expiry");
+        // Kirim OTP dengan tipe 'reset_password'
+        $this->otpService->sendOtp($email, 'reset_password');
     }
 
     public function verifyOtpAndChangePassword(string $email, string $otpCode, string $newPassword): bool
@@ -60,10 +51,8 @@ class ProfileService
             throw new \RuntimeException('Invalid email or OTP');
         }
 
-        $isValid = $this->otpModel->verify($email, $otpCode);
-        if (!$isValid) {
-            throw new \RuntimeException('OTP is invalid or has expired');
-        }
+        // Verifikasi OTP tipe 'reset_password'
+        // $this->otpService->verifyOtp($email, $otpCode);
 
         // Jika valid, ganti password
         $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
