@@ -9,9 +9,9 @@ class RoleService
         $this->roleModel = new Role($db);
     }
 
-    public function getAll(): array
+    public function getAll(array $filters = []): array
     {
-        return $this->roleModel->all();
+        return $this->roleModel->all($filters);
     }
 
     public function getById(int $id): array

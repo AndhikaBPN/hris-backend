@@ -11,43 +11,70 @@ class ShiftSchedule
 
     public function getByUserId(int $userId, array $filters = []): array
     {
-        $sql = "SELECT ss.*, s.name as shift_name, s.start_time, s.end_time, s.is_overnight 
-                FROM shift_schedules ss
-                LEFT JOIN shifts s ON ss.shift_id = s.id
-                WHERE ss.user_id = :user_id";
-        
+        $baseSql = "FROM shift_schedules ss
+                    LEFT JOIN shifts s ON ss.shift_id = s.id
+                    WHERE ss.user_id = :user_id";
+
         $params = ['user_id' => $userId];
 
         if (!empty($filters['date'])) {
-            $sql .= " AND ss.date = :date";
+            $baseSql .= " AND ss.date = :date";
             $params['date'] = $filters['date'];
         }
 
         if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
-            $sql .= " AND ss.date BETWEEN :start_date AND :end_date";
+            $baseSql .= " AND ss.date BETWEEN :start_date AND :end_date";
             $params['start_date'] = $filters['start_date'];
-            $params['end_date']   = $filters['end_date'];
+            $params['end_date'] = $filters['end_date'];
         }
 
-        $sql .= " ORDER BY ss.date ASC";
+        // Count total
+        $countStmt = $this->db->prepare("SELECT COUNT(ss.id) as total " . $baseSql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        $stmt = $this->db->prepare($sql);
+        // Pagination
+        $page = isset($filters['page']) ? max(1, (int) $filters['page']) : 1;
+        $limit = isset($filters['limit']) ? max(1, (int) $filters['limit']) : 10;
+        $offset = ($page - 1) * $limit;
+        $lastPage = ceil($total / $limit);
+
+        // Sorting
+        $sortCol = $filters['order_by'] ?? 'ss.date';
+        $sortDir = strtoupper($filters['sorting'] ?? 'ASC');
+        $allowedCols = ['ss.id', 'ss.date', 's.name'];
+        if (!in_array($sortCol, $allowedCols))
+            $sortCol = 'ss.date';
+        if (!in_array($sortDir, ['ASC', 'DESC']))
+            $sortDir = 'ASC';
+
+        $sqlData = "SELECT ss.*, s.name as shift_name, s.start_time, s.end_time, s.is_overnight " . $baseSql . " ORDER BY $sortCol $sortDir LIMIT $limit OFFSET $offset";
+        $stmt = $this->db->prepare($sqlData);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'data' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'meta' => [
+                'current_page' => $page,
+                'last_page' => (int) $lastPage,
+                'per_page' => $limit,
+                'total_records' => $total
+            ]
+        ];
     }
 
     public function findByUserAndDate(int $userId, string $date): array|false
     {
         $stmt = $this->db->prepare(
             "SELECT ss.*, s.name as shift_name, s.start_time, s.end_time, s.is_overnight
-             FROM shift_schedules ss
-             LEFT JOIN shifts s ON ss.shift_id = s.id
-             WHERE ss.user_id = :user_id AND ss.date = :date
-             LIMIT 1"
+            FROM shift_schedules ss
+            LEFT JOIN shifts s ON ss.shift_id = s.id
+            WHERE ss.user_id = :user_id AND ss.date = :date
+            LIMIT 1"
         );
         $stmt->execute([
             'user_id' => $userId,
-            'date'    => $date,
+            'date' => $date,
         ]);
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -62,15 +89,15 @@ class ShiftSchedule
                 is_day_off = VALUES(is_day_off),
                 created_by = VALUES(created_by),
                 notes = VALUES(notes)";
-                
+
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
-            'user_id'    => $userId,
-            'shift_id'   => $data['shift_id'] ?? null,
-            'date'       => $data['date'],
+            'user_id' => $userId,
+            'shift_id' => $data['shift_id'] ?? null,
+            'date' => $data['date'],
             'is_day_off' => $data['is_day_off'] ?? 0,
             'created_by' => $data['created_by'] ?? null,
-            'notes'      => $data['notes'] ?? null
+            'notes' => $data['notes'] ?? null
         ]);
     }
 
@@ -79,10 +106,10 @@ class ShiftSchedule
         $sql = "UPDATE shift_schedules SET shift_id = :shift_id, is_day_off = :is_day_off, notes = :notes WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
-            'id'         => $id,
-            'shift_id'   => $data['shift_id'] ?? null,
+            'id' => $id,
+            'shift_id' => $data['shift_id'] ?? null,
             'is_day_off' => $data['is_day_off'] ?? 0,
-            'notes'      => $data['notes'] ?? null
+            'notes' => $data['notes'] ?? null
         ]);
     }
 

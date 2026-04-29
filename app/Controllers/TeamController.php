@@ -12,7 +12,9 @@ class TeamController
     // GET /api/teams
     public function index(): void
     {
-        ResponseHelper::success($this->service->getAll());
+        $filters = $_GET ?? [];
+        $result = $this->service->getAll($filters);
+        ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
     }
 
     // GET /api/teams/{id}

@@ -20,6 +20,7 @@ return [
     // User Management
     // ----------------------------------------------------------------
     ['GET',    '/api/users',      'UserController', 'index',   ['c_level', 'hrd_manager']],
+    ['GET',    '/api/users/{id}', 'UserController', 'show',    ['c_level', 'hrd_manager']],
     ['POST',   '/api/users',      'UserController', 'store',   ['c_level', 'hrd_manager']],
     ['PUT',    '/api/users/{id}', 'UserController', 'update',  ['c_level', 'hrd_manager']],
     ['DELETE', '/api/users/{id}', 'UserController', 'destroy', ['c_level']],

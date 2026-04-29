@@ -216,12 +216,9 @@ class ShiftService
     /**
      * Ambil jadwal shift user untuk rentang tanggal tertentu.
      */
-    public function getSchedule(int $userId, string $fromDate, string $toDate): array
+    public function getSchedule(int $userId, array $filters = []): array
     {
-        return $this->scheduleModel->getByUserId($userId, [
-            'start_date' => $fromDate,
-            'end_date'   => $toDate
-        ]);
+        return $this->scheduleModel->getByUserId($userId, $filters);
     }
 
     /**

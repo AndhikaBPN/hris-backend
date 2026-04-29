@@ -9,9 +9,9 @@ class TeamService
         $this->teamModel = new Team($db);
     }
 
-    public function getAll(): array
+    public function getAll(array $filters = []): array
     {
-        return $this->teamModel->all();
+        return $this->teamModel->all($filters);
     }
 
     public function getById(int $id): array

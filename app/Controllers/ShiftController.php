@@ -32,9 +32,13 @@ class ShiftController
 
         $fromDate = $_GET['from_date'] ?? date('Y-m-01');
         $toDate   = $_GET['to_date'] ?? date('Y-m-t');
+        $filters  = array_merge($_GET, [
+            'start_date' => $fromDate,
+            'end_date'   => $toDate
+        ]);
 
-        $data = $this->service->getSchedule((int) $authUser['id'], $fromDate, $toDate);
-        ResponseHelper::success($data);
+        $result = $this->service->getSchedule((int) $authUser['id'], $filters);
+        ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
     }
 
     // POST /api/shifts/generate (Generate jadwal rotasi otomatis - HRD only)

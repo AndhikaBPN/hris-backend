@@ -34,13 +34,13 @@ class User
                 VALUES (:name, :email, :password, :role_id, :is_active, :manager_id, :team_id)";
         $stmt = $this->db->prepare($sql);
         $success = $stmt->execute([
-            'name'       => $data['name'],
-            'email'      => $data['email'],
-            'password'   => $data['password'],
-            'role_id'    => $data['role_id'] ?? null,
-            'is_active'  => $data['is_active'] ?? 1,
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['password'],
+            'role_id' => $data['role_id'],
+            'is_active' => $data['is_active'] ?? 1,
             'manager_id' => $data['manager_id'] ?? null,
-            'team_id'    => $data['team_id'] ?? null,
+            'team_id' => $data['team_id'] ?? null,
         ]);
 
         return $success ? (int) $this->db->lastInsertId() : false;
@@ -56,7 +56,7 @@ class User
         // Menyusun query update dinamis sesuai dengan data yang dioper
         $fields = [];
         $params = ['id' => $id];
-        
+
         foreach ($data as $key => $value) {
             $fields[] = "{$key} = :{$key}";
             $params[$key] = $value;
@@ -98,10 +98,10 @@ class User
             $params['team_id'] = $filters['team_id'];
         }
 
-        if (isset($filters['is_active'])) {
-            $sql .= " AND u.is_active = :is_active";
-            $params['is_active'] = $filters['is_active'];
-        }
+        // Filter default: hanya yang aktif (1) jika tidak ditentukan lain
+        $isActive = isset($filters['is_active']) ? $filters['is_active'] : 1;
+        $sql .= " AND u.is_active = :is_active";
+        $params['is_active'] = $isActive;
 
         // Hitung total data
         $countStmt = $this->db->prepare("SELECT COUNT(u.id) as total " . $sql);
@@ -109,13 +109,26 @@ class User
         $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
         // Pagination parameters
-        $page = isset($filters['page']) ? max(1, (int)$filters['page']) : 1;
-        $limit = isset($filters['limit']) ? max(1, (int)$filters['limit']) : 10;
+        $page = isset($filters['page']) ? max(1, (int) $filters['page']) : 1;
+        $limit = isset($filters['limit']) ? max(1, (int) $filters['limit']) : 10;
         $offset = ($page - 1) * $limit;
 
         $lastPage = ceil($total / $limit);
 
-        $sqlData = $this->baseSelectColumns() . " " . $sql . " ORDER BY u.id DESC LIMIT $limit OFFSET $offset";
+        // Sorting
+        $sortCol = $filters['order_by'] ?? 'u.id';
+        $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
+
+        // Whitelist columns to prevent SQL Injection
+        $allowedCols = ['u.id', 'u.name', 'u.email', 'r.role', 'u.created_at'];
+        if (!in_array($sortCol, $allowedCols)) {
+            $sortCol = 'u.id';
+        }
+        if (!in_array($sortDir, ['ASC', 'DESC'])) {
+            $sortDir = 'DESC';
+        }
+
+        $sqlData = $this->baseSelectColumns() . " " . $sql . " ORDER BY $sortCol $sortDir LIMIT $limit OFFSET $offset";
         $stmt = $this->db->prepare($sqlData);
         $stmt->execute($params);
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -123,9 +136,9 @@ class User
         return [
             'data' => $data,
             'meta' => [
-                'current_page'  => $page,
-                'last_page'     => (int)$lastPage,
-                'per_page'      => $limit,
+                'current_page' => $page,
+                'last_page' => (int) $lastPage,
+                'per_page' => $limit,
                 'total_records' => $total
             ]
         ];
@@ -145,6 +158,15 @@ class User
     {
         $stmt = $this->db->prepare("SELECT id FROM `role` WHERE role = :role LIMIT 1");
         $stmt->execute(['role' => $role]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row ? (int) $row['id'] : null;
+    }
+
+    private function findTeamId(string $teamName): ?int
+    {
+        $stmt = $this->db->prepare("SELECT id FROM `team` WHERE team_name = :team_name LIMIT 1");
+        $stmt->execute(['team_name' => $teamName]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $row ? (int) $row['id'] : null;

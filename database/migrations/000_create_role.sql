@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS `role` (
     UNIQUE KEY uq_role_role (role)
 );
 
-INSERT IGNORE INTO `role` (role) VALUES
+INSERT INTO `role` (role) VALUES
     ('c_level'),
     ('hrd_manager'),
     ('technical_manager'),

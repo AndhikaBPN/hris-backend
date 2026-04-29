@@ -17,6 +17,17 @@ class UserController
         ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
     }
 
+    // GET /api/users/{id}
+    public function show(int $id): void
+    {
+        try {
+            $user = $this->service->getById($id);
+            ResponseHelper::success($user, 'OK');
+        } catch (\InvalidArgumentException $e) {
+            ResponseHelper::error($e->getMessage(), 404);
+        }
+    }
+
     // POST /api/users
     public function store(): void
     {

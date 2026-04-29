@@ -25,10 +25,41 @@ class AttendanceLog
         return $success ? (int) $this->db->lastInsertId() : false;
     }
 
-    public function getByUserId(int $userId): array
+    public function getByUserId(int $userId, array $filters = []): array
     {
-        $stmt = $this->db->prepare("SELECT * FROM attendance_logs WHERE user_id = :user_id ORDER BY created_at DESC");
-        $stmt->execute(['user_id' => $userId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $baseSql = "FROM attendance_logs WHERE user_id = :user_id";
+        $params = ['user_id' => $userId];
+
+        // Count total
+        $countStmt = $this->db->prepare("SELECT COUNT(id) as total " . $baseSql);
+        $countStmt->execute($params);
+        $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        // Pagination
+        $page = isset($filters['page']) ? max(1, (int) $filters['page']) : 1;
+        $limit = isset($filters['limit']) ? max(1, (int) $filters['limit']) : 10;
+        $offset = ($page - 1) * $limit;
+        $lastPage = ceil($total / $limit);
+
+        // Sorting
+        $sortCol = $filters['order_by'] ?? 'created_at';
+        $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
+        $allowedCols = ['id', 'created_at', 'session', 'message'];
+        if (!in_array($sortCol, $allowedCols)) $sortCol = 'created_at';
+        if (!in_array($sortDir, ['ASC', 'DESC'])) $sortDir = 'DESC';
+
+        $sqlData = "SELECT * " . $baseSql . " ORDER BY $sortCol $sortDir LIMIT $limit OFFSET $offset";
+        $stmt = $this->db->prepare($sqlData);
+        $stmt->execute($params);
+
+        return [
+            'data' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+            'meta' => [
+                'current_page'  => $page,
+                'last_page'     => (int) $lastPage,
+                'per_page'      => $limit,
+                'total_records' => $total
+            ]
+        ];
     }
 }

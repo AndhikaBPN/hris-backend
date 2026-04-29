@@ -44,26 +44,37 @@ class Attendance
         }
 
         // Cek jika bypass pagination (untuk method getToday atau operasi backend lain)
-        $isPaginated = isset($filters['page']) || isset($filters['limit']);
+        // $isPaginated = isset($filters['page']) || isset($filters['limit']);
 
-        if (!$isPaginated) {
-            $sqlData = "SELECT a.*, ss.date as shift_date " . $sql . " ORDER BY a.check_in_time DESC";
-            $stmt = $this->db->prepare($sqlData);
-            $stmt->execute($params);
-            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['data' => $data, 'meta' => null];
-        }
+        // if (!$isPaginated) {
+        //     $sqlData = "SELECT a.*, ss.date as shift_date " . $sql . " ORDER BY a.check_in_time DESC";
+        //     $stmt = $this->db->prepare($sqlData);
+        //     $stmt->execute($params);
+        //     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //     return ['data' => $data, 'meta' => null];
+        // }
 
+        // Count total
         $countStmt = $this->db->prepare("SELECT COUNT(a.id) as total " . $sql);
         $countStmt->execute($params);
         $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
+        // Pagination
         $page = isset($filters['page']) ? max(1, (int) $filters['page']) : 1;
         $limit = isset($filters['limit']) ? max(1, (int) $filters['limit']) : 10;
         $offset = ($page - 1) * $limit;
         $lastPage = ceil($total / $limit);
 
-        $sqlData = "SELECT a.*, ss.date as shift_date " . $sql . " ORDER BY a.check_in_time DESC LIMIT $limit OFFSET $offset";
+        // Sorting
+        $sortCol = $filters['order_by'] ?? 'a.check_in_time';
+        $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
+        $allowedCols = ['a.id', 'a.check_in_time', 'ss.date', 'a.status'];
+        if (!in_array($sortCol, $allowedCols))
+            $sortCol = 'a.check_in_time';
+        if (!in_array($sortDir, ['ASC', 'DESC']))
+            $sortDir = 'DESC';
+
+        $sqlData = "SELECT a.*, ss.date as shift_date " . $sql . " ORDER BY $sortCol $sortDir LIMIT $limit OFFSET $offset";
         $stmt = $this->db->prepare($sqlData);
         $stmt->execute($params);
 
@@ -91,26 +102,27 @@ class Attendance
             $params['date'] = $filters['date'];
         }
 
-        $isPaginated = isset($filters['page']) || isset($filters['limit']);
-
-        if (!$isPaginated) {
-            $sqlData = "SELECT a.*, ss.date as shift_date, u.name as user_name " . $sql . " ORDER BY a.check_in_time DESC";
-            $stmt = $this->db->prepare($sqlData);
-            $stmt->execute($params);
-            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['data' => $data, 'meta' => null];
-        }
-
+        // Count total
         $countStmt = $this->db->prepare("SELECT COUNT(a.id) as total " . $sql);
         $countStmt->execute($params);
         $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
+        // Pagination
         $page = isset($filters['page']) ? max(1, (int) $filters['page']) : 1;
         $limit = isset($filters['limit']) ? max(1, (int) $filters['limit']) : 10;
         $offset = ($page - 1) * $limit;
         $lastPage = ceil($total / $limit);
 
-        $sqlData = "SELECT a.*, ss.date as shift_date, u.name as user_name " . $sql . " ORDER BY a.check_in_time DESC LIMIT $limit OFFSET $offset";
+        // Sorting
+        $sortCol = $filters['order_by'] ?? 'a.check_in_time';
+        $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
+        $allowedCols = ['a.id', 'a.check_in_time', 'ss.date', 'u.name', 'a.status'];
+        if (!in_array($sortCol, $allowedCols))
+            $sortCol = 'a.check_in_time';
+        if (!in_array($sortDir, ['ASC', 'DESC']))
+            $sortDir = 'DESC';
+
+        $sqlData = "SELECT a.*, ss.date as shift_date, u.name as user_name " . $sql . " ORDER BY $sortCol $sortDir LIMIT $limit OFFSET $offset";
         $stmt = $this->db->prepare($sqlData);
         $stmt->execute($params);
 
