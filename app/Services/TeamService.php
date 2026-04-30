@@ -35,7 +35,10 @@ class TeamService
             throw new \InvalidArgumentException('Team already exists');
         }
 
-        $id = $this->teamModel->create(['team_name' => $teamName]);
+        $id = $this->teamModel->create([
+            'team_name'    => $teamName,
+            'team_lead_id' => $data['team_lead_id'] ?? null
+        ]);
         if (!$id) {
             throw new \RuntimeException('Failed to create team');
         }
@@ -60,7 +63,10 @@ class TeamService
             throw new \InvalidArgumentException('Team already exists');
         }
 
-        return $this->teamModel->update($id, ['team_name' => $teamName]);
+        return $this->teamModel->update($id, [
+            'team_name'    => $teamName,
+            'team_lead_id' => $data['team_lead_id'] ?? null
+        ]);
     }
 
     public function delete(int $id): bool
