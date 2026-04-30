@@ -64,6 +64,12 @@ class ProfileController
             return;
         }
 
+        $passwordRegex = '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^$*])[A-Za-z\d@$!%*?&#^$*]{8,}$/';
+        if (!preg_match($passwordRegex, $newPw)) {
+            ResponseHelper::error('Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.', 422);
+            return;
+        }
+
         try {
             $this->service->verifyOtpAndChangePassword($email, $otp, $newPw);
             ResponseHelper::success(null, 'Password changed successfully. Please log in again.');
