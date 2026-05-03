@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS leave_requests (
     id              INT AUTO_INCREMENT PRIMARY KEY,
     user_id         INT NOT NULL,
     leave_date      DATE NOT NULL,
-    leave_type      ENUM('annual', 'sick', 'leave_of_absence') NOT NULL DEFAULT 'annual',
+    leave_type      ENUM('annual', 'sick', 'permit', 'leave_of_absence') NOT NULL DEFAULT 'annual',
     reason          TEXT NULL,
     doctor_letter   VARCHAR(255) NULL,                      -- path file, wajib diisi jika leave_type = sick
     status          ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',

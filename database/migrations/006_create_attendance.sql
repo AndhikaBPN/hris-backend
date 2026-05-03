@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS attendance (
     latitude            DECIMAL(10, 8) NULL,
     longitude           DECIMAL(11, 8) NULL,
     distance_to_office  FLOAT NULL,
-    status              ENUM('valid', 'late', 'invalid') NOT NULL,
+    status              ENUM('valid', 'late', 'invalid', 'leave', 'sick-leave', 'permit') NOT NULL,
     check_in_time       TIMESTAMP NOT NULL,
     check_out_time      TIMESTAMP NULL,
     created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
