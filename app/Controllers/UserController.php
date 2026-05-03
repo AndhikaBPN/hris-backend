@@ -13,8 +13,22 @@ class UserController
     public function index(): void
     {
         $filters = $_GET ?? [];
-        $result  = $this->service->getAll($filters);
+        $result = $this->service->getAll($filters);
         ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
+    }
+
+    // GET /api/users/birthdays
+    public function birthdays(): void
+    {
+        $users = $this->service->getBirthdaysThisMonth();
+        ResponseHelper::success($users, 'OK');
+    }
+
+    // GET /api/users/count
+    public function countActive(): void
+    {
+        $count = $this->service->getActiveCount();
+        ResponseHelper::success(['total' => $count], 'OK');
     }
 
     // GET /api/users/{id}
