@@ -19,7 +19,7 @@ try {
     foreach ($roles as $r) {
         $stmt = $conn->prepare("INSERT IGNORE INTO `role` (role) VALUES (?)");
         $stmt->execute([$r]);
-        
+
         $s = $conn->prepare("SELECT id FROM `role` WHERE role = ?");
         $s->execute([$r]);
         $roleIds[$r] = $s->fetch(PDO::FETCH_ASSOC)['id'];
@@ -37,7 +37,7 @@ try {
     foreach ($teams as $t) {
         $stmt = $conn->prepare("INSERT IGNORE INTO team (team_name) VALUES (?)");
         $stmt->execute([$t]);
-        
+
         $s = $conn->prepare("SELECT id FROM team WHERE team_name = ?");
         $s->execute([$t]);
         $teamIds[$t] = $s->fetch(PDO::FETCH_ASSOC)['id'];
@@ -107,11 +107,11 @@ try {
     foreach ($userIds as $uid) {
         // Leave Balance
         $conn->prepare("INSERT IGNORE INTO leave_balances (user_id, year, month, quota, used) VALUES (?, ?, ?, 1, 0)")
-             ->execute([$uid, $currentYear, (int)$currentMonth]);
+            ->execute([$uid, $currentYear, (int) $currentMonth]);
 
         // Shift Schedule for Today
         $conn->prepare("INSERT IGNORE INTO shift_schedules (user_id, shift_id, date, is_day_off) VALUES (?, 1, ?, 0)")
-             ->execute([$uid, $today]);
+            ->execute([$uid, $today]);
     }
     echo "[OK] Shift schedules and leave balances seeded for today.\n";
 
@@ -124,14 +124,14 @@ try {
         // Clock In Session 1
         $conn->prepare("INSERT IGNORE INTO attendance (user_id, shift_schedule_id, session, status, check_in_time, distance_to_office) 
                         VALUES (?, ?, 1, 'valid', ?, 10.5)")
-             ->execute([$sch['user_id'], $sch['id'], $today . ' 06:05:00']);
+            ->execute([$sch['user_id'], $sch['id'], $today . ' 06:05:00']);
     }
     echo "[OK] Attendance (today) seeded.\n";
 
     // 9. Leave Requests (Monthly)
     $conn->prepare("INSERT IGNORE INTO leave_requests (user_id, leave_date, leave_type, reason, status, approved_by, approved_at) 
                     VALUES (?, ?, 'annual', 'Family gathering', 'approved', (SELECT id FROM users WHERE email='hr@hris.com'), NOW())")
-         ->execute([$userIds[0], $today]);
+        ->execute([$userIds[0], $today]);
     echo "[OK] Leave requests seeded.\n";
 
     echo "\n--- Master Seeding Complete ---\n";
