@@ -58,4 +58,28 @@ class LeaveBalance
             'month'   => $month
         ]);
     }
+
+    public function getYearlySummary(int $userId, int $year): array
+    {
+        $sql = "SELECT 
+                    SUM(quota) as total_quota, 
+                    SUM(used) as total_used,
+                    (SUM(quota) - SUM(used)) as remaining_quota
+                FROM leave_balances 
+                WHERE user_id = :user_id AND year = :year";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'user_id' => $userId,
+            'year'    => $year
+        ]);
+        
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return [
+            'total_quota'     => (int) ($result['total_quota'] ?? 0),
+            'total_used'      => (int) ($result['total_used'] ?? 0),
+            'remaining_quota' => (int) ($result['remaining_quota'] ?? 0)
+        ];
+    }
 }
