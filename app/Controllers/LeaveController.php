@@ -41,6 +41,13 @@ class LeaveController
         ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
     }
 
+    // GET /api/leave/monthly
+    public function monthlyLeaves(): void
+    {
+        $data = $this->service->getMonthlyLeaves();
+        ResponseHelper::success($data, 'Monthly approved leaves fetched successfully');
+    }
+
     // PUT /api/leave/{id}/approve
     public function approve(int $id): void
     {

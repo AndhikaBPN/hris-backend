@@ -125,4 +125,23 @@ class LeaveRequest
             'approved_by' => $approvedBy
         ]);
     }
+
+    /**
+     * Get list of employees with approved leave in current month.
+     */
+    public function getMonthlyApprovedLeaves(): array
+    {
+        $sql = "SELECT lr.*, u.name as user_name, r.role as user_role 
+                FROM leave_requests lr 
+                JOIN users u ON lr.user_id = u.id 
+                JOIN role r ON r.id = u.role_id
+                WHERE lr.status = 'approved' 
+                AND MONTH(lr.leave_date) = MONTH(CURRENT_DATE()) 
+                AND YEAR(lr.leave_date) = YEAR(CURRENT_DATE())
+                ORDER BY lr.leave_date ASC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
