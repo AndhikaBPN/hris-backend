@@ -181,4 +181,9 @@ class AttendanceService
 
         return $this->attendanceModel->getTodayByRoles($roles);
     }
+
+    public function getTodaySubordinateAttendance(int $managerId): array
+    {
+        return $this->attendanceModel->getTodayByManagerId($managerId);
+    }
 }

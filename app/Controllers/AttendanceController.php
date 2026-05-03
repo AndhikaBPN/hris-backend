@@ -67,6 +67,14 @@ class AttendanceController
         ResponseHelper::success($data, 'Today\'s attendance fetched successfully');
     }
 
+    // GET /api/attendance/subordinates/today
+    public function subordinatesToday(): void
+    {
+        $authUser = $GLOBALS['auth_user'];
+        $data = $this->service->getTodaySubordinateAttendance((int) $authUser['id']);
+        ResponseHelper::success($data, 'Today\'s subordinate attendance fetched successfully');
+    }
+
     private function json(): array
     {
         return json_decode(file_get_contents('php://input'), true) ?? [];

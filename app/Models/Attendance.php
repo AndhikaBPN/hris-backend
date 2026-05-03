@@ -166,6 +166,25 @@ class Attendance
     }
 
     /**
+     * Get today's attendance list for all users managed by a specific manager.
+     */
+    public function getTodayByManagerId(int $managerId): array
+    {
+        $sql = "SELECT a.*, ss.date as shift_date, u.name as user_name, r.role as user_role, u.name as name
+                FROM attendance a
+                JOIN shift_schedules ss ON a.shift_schedule_id = ss.id
+                JOIN users u ON a.user_id = u.id
+                JOIN role r ON u.role_id = r.id
+                WHERE ss.date = CURRENT_DATE()
+                AND u.manager_id = :manager_id
+                ORDER BY a.check_in_time DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['manager_id' => $managerId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Insert attendance record for approved leave/sick-leave/permit.
      * Uses INSERT IGNORE so existing real attendance is never overwritten.
      */
