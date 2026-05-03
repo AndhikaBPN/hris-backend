@@ -43,16 +43,15 @@ class Attendance
             $params['date'] = $filters['date'];
         }
 
-        // Cek jika bypass pagination (untuk method getToday atau operasi backend lain)
-        // $isPaginated = isset($filters['page']) || isset($filters['limit']);
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND ss.date >= :date_from";
+            $params['date_from'] = $filters['date_from'];
+        }
 
-        // if (!$isPaginated) {
-        //     $sqlData = "SELECT a.*, ss.date as shift_date " . $sql . " ORDER BY a.check_in_time DESC";
-        //     $stmt = $this->db->prepare($sqlData);
-        //     $stmt->execute($params);
-        //     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        //     return ['data' => $data, 'meta' => null];
-        // }
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND ss.date <= :date_to";
+            $params['date_to'] = $filters['date_to'];
+        }
 
         // Count total
         $countStmt = $this->db->prepare("SELECT COUNT(a.id) as total " . $sql);
@@ -100,6 +99,16 @@ class Attendance
         if (!empty($filters['date'])) {
             $sql .= " AND ss.date = :date";
             $params['date'] = $filters['date'];
+        }
+
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND ss.date >= :date_from";
+            $params['date_from'] = $filters['date_from'];
+        }
+
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND ss.date <= :date_to";
+            $params['date_to'] = $filters['date_to'];
         }
 
         // Count total
@@ -197,11 +206,11 @@ class Attendance
 
         $stmt = $this->db->prepare($sql);
         $success = $stmt->execute([
-            'user_id'           => $data['user_id'],
+            'user_id' => $data['user_id'],
             'shift_schedule_id' => $data['shift_schedule_id'],
-            'session'           => $data['session'],
-            'status'            => $data['status'],
-            'check_in_time'     => $data['check_in_time'],
+            'session' => $data['session'],
+            'status' => $data['status'],
+            'check_in_time' => $data['check_in_time'],
         ]);
 
         return $success ? (int) $this->db->lastInsertId() : false;
