@@ -77,4 +77,9 @@ class TeamService
 
         return $this->teamModel->delete($id);
     }
+
+    public function getCount(): int
+    {
+        return $this->teamModel->count();
+    }
 }

@@ -71,4 +71,9 @@ class RoleService
 
         return $this->roleModel->delete($id);
     }
+
+    public function getCount(): int
+    {
+        return $this->roleModel->count();
+    }
 }

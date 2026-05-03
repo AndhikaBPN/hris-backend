@@ -30,11 +30,12 @@ class User
         }
         unset($data['role']);
 
-        $sql = "INSERT INTO users (name, email, password, role_id, is_active, manager_id, team_id)
-                VALUES (:name, :email, :password, :role_id, :is_active, :manager_id, :team_id)";
+        $sql = "INSERT INTO users (name, birth_date, email, password, role_id, is_active, manager_id, team_id)
+                VALUES (:name, :birth_date, :email, :password, :role_id, :is_active, :manager_id, :team_id)";
         $stmt = $this->db->prepare($sql);
         $success = $stmt->execute([
             'name' => $data['name'],
+            'birth_date' => $data['birth_date'] ?? null,
             'email' => $data['email'],
             'password' => $data['password'],
             'role_id' => $data['role_id'],
@@ -76,6 +77,14 @@ class User
     {
         $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
         return $stmt->execute(['id' => $id]);
+    }
+
+    public function countActive(): int
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(u.id) as total FROM users u WHERE u.is_active = 1");
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int) ($row['total'] ?? 0);
     }
 
     public function all(array $filters = []): array
@@ -144,6 +153,19 @@ class User
         ];
     }
 
+    public function getBirthdays(int $month): array
+    {
+        $sql = $this->baseSelectColumns() . " FROM users u 
+                LEFT JOIN `role` r ON u.role_id = r.id 
+                WHERE MONTH(u.birth_date) = :month 
+                AND u.is_active = 1 
+                ORDER BY DAY(u.birth_date) ASC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['month' => $month]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     private function baseSelect(): string
     {
         return $this->baseSelectColumns() . " FROM users u LEFT JOIN `role` r ON u.role_id = r.id";
@@ -151,7 +173,7 @@ class User
 
     private function baseSelectColumns(): string
     {
-        return "SELECT u.id, u.name, u.email, u.password, u.role_id, r.role, u.is_active, u.manager_id, u.team_id, u.created_at, u.updated_at";
+        return "SELECT u.id, u.name, u.email, u.birth_date, u.password, u.role_id, r.role, u.is_active, u.manager_id, u.team_id, u.created_at, u.updated_at";
     }
 
     private function findRoleId(string $role): ?int

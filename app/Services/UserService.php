@@ -35,6 +35,18 @@ class UserService
         return $result;
     }
 
+    /** Ambil daftar user yang ulang tahun bulan ini. */
+    public function getBirthdaysThisMonth(): array
+    {
+        $month = (int) date('m');
+        $users = $this->userModel->getBirthdays($month);
+
+        return array_map(function ($user) {
+            unset($user['password']);
+            return $user;
+        }, $users);
+    }
+
     /** Buat user baru. Hash password sebelum simpan. */
     public function create(array $data): int
     {
@@ -85,5 +97,11 @@ class UserService
     public function setActive(int $id, bool $isActive): bool
     {
         return $this->userModel->update($id, ['is_active' => $isActive ? 1 : 0]);
+    }
+
+    /** Ambil jumlah user aktif. */
+    public function getActiveCount(): int
+    {
+        return $this->userModel->countActive();
     }
 }

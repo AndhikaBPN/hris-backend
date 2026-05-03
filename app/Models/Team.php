@@ -90,4 +90,11 @@ class Team
         $stmt = $this->db->prepare("DELETE FROM team WHERE id = :id");
         return $stmt->execute(['id' => $id]);
     }
+
+    public function count(): int
+    {
+        $stmt = $this->db->query("SELECT COUNT(*) as total FROM team");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int) ($row['total'] ?? 0);
+    }
 }

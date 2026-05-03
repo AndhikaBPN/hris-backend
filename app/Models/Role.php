@@ -83,4 +83,11 @@ class Role
         $stmt = $this->db->prepare("DELETE FROM `role` WHERE id = :id");
         return $stmt->execute(['id' => $id]);
     }
+
+    public function count(): int
+    {
+        $stmt = $this->db->query("SELECT COUNT(*) as total FROM `role` text");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int) ($row['total'] ?? 0);
+    }
 }
