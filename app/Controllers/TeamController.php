@@ -17,6 +17,13 @@ class TeamController
         ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
     }
 
+    // GET /api/teams/count
+    public function count(): void
+    {
+        $total = $this->service->getCount();
+        ResponseHelper::success(['total' => $total], 'OK');
+    }
+
     // GET /api/teams/{id}
     public function show(int $id): void
     {

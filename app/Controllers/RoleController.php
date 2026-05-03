@@ -17,6 +17,13 @@ class RoleController
         ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
     }
 
+    // GET /api/roles/count
+    public function count(): void
+    {
+        $total = $this->service->getCount();
+        ResponseHelper::success(['total' => $total], 'OK');
+    }
+
     // GET /api/roles/{id}
     public function show(int $id): void
     {
