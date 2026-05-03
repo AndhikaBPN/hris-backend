@@ -166,4 +166,19 @@ class AttendanceService
         }
         return sqrt($sum);
     }
+
+    public function getTodayAttendanceByRole(string $category): array
+    {
+        $roleMap = [
+            'manager' => ['hrd_manager', 'technical_manager'],
+            'staff'   => ['team_leader', 'staff']
+        ];
+
+        $roles = $roleMap[$category] ?? [];
+        if (empty($roles)) {
+            return [];
+        }
+
+        return $this->attendanceModel->getTodayByRoles($roles);
+    }
 }

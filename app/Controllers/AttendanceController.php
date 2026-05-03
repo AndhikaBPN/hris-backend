@@ -54,6 +54,19 @@ class AttendanceController
         ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
     }
 
+    // GET /api/attendance/today?role=manager|staff
+    public function today(): void
+    {
+        $role = $_GET['role'] ?? '';
+        if (!in_array($role, ['manager', 'staff'])) {
+            ResponseHelper::error('Invalid role parameter. Must be "manager" or "staff".', 422);
+            return;
+        }
+
+        $data = $this->service->getTodayAttendanceByRole($role);
+        ResponseHelper::success($data, 'Today\'s attendance fetched successfully');
+    }
+
     private function json(): array
     {
         return json_decode(file_get_contents('php://input'), true) ?? [];

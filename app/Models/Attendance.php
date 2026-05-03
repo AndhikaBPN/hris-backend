@@ -142,4 +142,49 @@ class Attendance
         $res = $this->getByUserId($userId, ['date' => date('Y-m-d')]);
         return $res['data'] ?? [];
     }
+
+    /**
+     * Get today's attendance list filtered by internal categories (manager vs staff).
+     *
+     * @param string[] $roles List of role strings to filter, e.g. ['staff', 'team_leader']
+     */
+    public function getTodayByRoles(array $roles): array
+    {
+        $placeholders = implode(',', array_fill(0, count($roles), '?'));
+        $sql = "SELECT a.*, ss.date as shift_date, u.name as user_name, r.role as user_role, u.name as name
+                FROM attendance a
+                JOIN shift_schedules ss ON a.shift_schedule_id = ss.id
+                JOIN users u ON a.user_id = u.id
+                JOIN role r ON u.role_id = r.id
+                WHERE ss.date = CURRENT_DATE()
+                AND r.role IN ($placeholders)
+                ORDER BY a.check_in_time DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($roles);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Insert attendance record for approved leave/sick-leave/permit.
+     * Uses INSERT IGNORE so existing real attendance is never overwritten.
+     */
+    public function createLeaveEntry(array $data): int|false
+    {
+        $sql = "INSERT IGNORE INTO attendance
+                    (user_id, shift_schedule_id, session, status, check_in_time)
+                VALUES
+                    (:user_id, :shift_schedule_id, :session, :status, :check_in_time)";
+
+        $stmt = $this->db->prepare($sql);
+        $success = $stmt->execute([
+            'user_id'           => $data['user_id'],
+            'shift_schedule_id' => $data['shift_schedule_id'],
+            'session'           => $data['session'],
+            'status'            => $data['status'],
+            'check_in_time'     => $data['check_in_time'],
+        ]);
+
+        return $success ? (int) $this->db->lastInsertId() : false;
+    }
 }
