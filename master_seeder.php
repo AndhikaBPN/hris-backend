@@ -47,12 +47,12 @@ try {
     // 4. Users (Hierarchical)
     $password = password_hash('password', PASSWORD_BCRYPT);
     $usersToSeed = [
-        ['name' => 'CEO Admin', 'email' => 'admin@hris.com', 'role' => 'c_level', 'manager' => null, 'team' => null],
-        ['name' => 'HR Manager', 'email' => 'hr@hris.com', 'role' => 'hrd_manager', 'manager' => 'admin@hris.com', 'team' => null],
-        ['name' => 'Tech Manager', 'email' => 'tech@hris.com', 'role' => 'technical_manager', 'manager' => 'admin@hris.com', 'team' => null],
-        ['name' => 'Team Lead Alpha', 'email' => 'lead.alpha@hris.com', 'role' => 'team_leader', 'manager' => 'tech@hris.com', 'team' => 'Alpha'],
-        ['name' => 'Staff Backend', 'email' => 'staff.backend@hris.com', 'role' => 'staff', 'manager' => 'lead.alpha@hris.com', 'team' => 'Alpha'],
-        ['name' => 'Staff Frontend', 'email' => 'staff.frontend@hris.com', 'role' => 'staff', 'manager' => 'lead.alpha@hris.com', 'team' => 'Alpha'],
+        ['name' => 'CEO Admin', 'email' => 'admin@hris.com', 'role' => 'c_level', 'manager' => null, 'team' => null, 'dob' => '1980-01-15'],
+        ['name' => 'HR Manager', 'email' => 'hr@hris.com', 'role' => 'hrd_manager', 'manager' => 'admin@hris.com', 'team' => null, 'dob' => '1985-05-20'],
+        ['name' => 'Tech Manager', 'email' => 'tech@hris.com', 'role' => 'technical_manager', 'manager' => 'admin@hris.com', 'team' => null, 'dob' => '1988-08-10'],
+        ['name' => 'Team Lead Alpha', 'email' => 'lead.alpha@hris.com', 'role' => 'team_leader', 'manager' => 'tech@hris.com', 'team' => 'Alpha', 'dob' => date('Y') . '-' . date('m') . '-10'], // Birthday today/this month
+        ['name' => 'Staff Backend', 'email' => 'staff.backend@hris.com', 'role' => 'staff', 'manager' => 'lead.alpha@hris.com', 'team' => 'Alpha', 'dob' => '1995-12-25'],
+        ['name' => 'Staff Frontend', 'email' => 'staff.frontend@hris.com', 'role' => 'staff', 'manager' => 'lead.alpha@hris.com', 'team' => 'Alpha', 'dob' => date('Y') . '-' . date('m') . '-20'], // Birthday this month
     ];
 
     foreach ($usersToSeed as $u) {
@@ -65,15 +65,16 @@ try {
 
         $teamId = $u['team'] ? ($teamIds[$u['team']] ?? null) : null;
 
-        $stmt = $conn->prepare("INSERT IGNORE INTO users (name, email, password, role_id, manager_id, team_id) 
-                               VALUES (:name, :email, :password, :role_id, :manager_id, :team_id)");
+        $stmt = $conn->prepare("INSERT IGNORE INTO users (name, email, password, role_id, manager_id, team_id, birth_date) 
+                               VALUES (:name, :email, :password, :role_id, :manager_id, :team_id, :birth_date)");
         $stmt->execute([
             'name' => $u['name'],
             'email' => $u['email'],
             'password' => $password,
             'role_id' => $roleIds[$u['role']],
             'manager_id' => $managerId,
-            'team_id' => $teamId
+            'team_id' => $teamId,
+            'birth_date' => $u['dob']
         ]);
     }
     echo "[OK] Users seeded.\n";
