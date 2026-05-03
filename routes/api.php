@@ -20,6 +20,8 @@ return [
     // ----------------------------------------------------------------
     // User Management
     // ----------------------------------------------------------------
+    ['GET', '/api/users/count', 'UserController', 'countActive', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/users/birthdays', 'UserController', 'birthdays', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/users', 'UserController', 'index', ['c_level', 'hrd_manager']],
     ['GET', '/api/users/{id}', 'UserController', 'show', ['c_level', 'hrd_manager']],
     ['POST', '/api/users', 'UserController', 'store', ['c_level', 'hrd_manager']],
@@ -29,6 +31,7 @@ return [
     // ----------------------------------------------------------------
     // Team Management
     // ----------------------------------------------------------------
+    ['GET', '/api/teams/count', 'TeamController', 'count', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/teams', 'TeamController', 'index', ['c_level', 'hrd_manager', 'technical_manager']],
     ['GET', '/api/teams/{id}', 'TeamController', 'show', ['c_level', 'hrd_manager', 'technical_manager']],
     ['POST', '/api/teams', 'TeamController', 'store', ['c_level', 'hrd_manager', 'technical_manager']],
@@ -38,6 +41,7 @@ return [
     // ----------------------------------------------------------------
     // Role Management
     // ----------------------------------------------------------------
+    ['GET', '/api/roles/count', 'RoleController', 'count', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/roles', 'RoleController', 'index', ['c_level', 'hrd_manager']],
     ['GET', '/api/roles/{id}', 'RoleController', 'show', ['c_level', 'hrd_manager']],
     ['POST', '/api/roles', 'RoleController', 'store', ['c_level', 'hrd_manager']],
@@ -49,12 +53,14 @@ return [
     // ----------------------------------------------------------------
     ['POST', '/api/attendance', 'AttendanceController', 'store', ['hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/attendance', 'AttendanceController', 'index', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/attendance/today', 'AttendanceController', 'today', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
 
     // ----------------------------------------------------------------
     // Leave
     // ----------------------------------------------------------------
     ['POST', '/api/leave', 'LeaveController', 'store', ['hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/leave', 'LeaveController', 'index', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/leave/monthly', 'LeaveController', 'monthlyLeaves', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['PUT', '/api/leave/{id}/approve', 'LeaveController', 'approve', ['c_level', 'hrd_manager']],
     ['PUT', '/api/leave/{id}/reject', 'LeaveController', 'reject', ['c_level', 'hrd_manager']],
 
