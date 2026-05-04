@@ -36,6 +36,14 @@ class LeaveService
             throw new \InvalidArgumentException('Doctor\'s letter must be uploaded for sick leave');
         }
 
+        if (empty($data['leave_date_from']) || empty($data['leave_date_to'])) {
+            throw new \InvalidArgumentException('leave_date_from and leave_date_to are required');
+        }
+
+        if ($data['leave_date_to'] < $data['leave_date_from']) {
+            throw new \InvalidArgumentException('leave_date_to must be equal to or after leave_date_from');
+        }
+
         if ($leaveType === 'annual') {
             $quota = $this->getRemainingQuota($userId);
             if ($quota <= 0) {
@@ -62,10 +70,10 @@ class LeaveService
 
         $this->leaveModel->updateStatus($leaveId, 'approved', $approverId);
 
-        // Kurangi saldo cuti tahunan
+        // Kurangi saldo cuti tahunan (berdasarkan bulan leave_date_from)
         if ($leave['leave_type'] === 'annual') {
-            $year = (int) date('Y', strtotime($leave['leave_date']));
-            $month = (int) date('n', strtotime($leave['leave_date']));
+            $year  = (int) date('Y', strtotime($leave['leave_date_from']));
+            $month = (int) date('n', strtotime($leave['leave_date_from']));
             $this->balanceModel->incrementUsed($leave['user_id'], $year, $month);
         }
 
@@ -81,9 +89,10 @@ class LeaveService
      *   sick                      → sick-leave
      *   permit                    → permit
      *
-     * Membuat record untuk session 1 & 2. Menggunakan INSERT IGNORE
-     * sehingga absensi real yang sudah ada tidak akan tertimpa.
-     * Jika shift schedule untuk tanggal tersebut belum di-generate, skip.
+     * Loop setiap tanggal dari leave_date_from s/d leave_date_to.
+     * Tiap tanggal: cek shift schedule, buat record session 1 & 2.
+     * Gunakan INSERT IGNORE agar absensi real tidak tertimpa.
+     * Jika jadwal belum di-generate untuk tanggal tertentu, skip.
      */
     private function createLeaveAttendance(array $leave): void
     {
@@ -95,26 +104,26 @@ class LeaveService
         ];
         $attendanceStatus = $statusMap[$leave['leave_type']] ?? 'leave';
 
-        $schedule = $this->scheduleModel->findByUserAndDate(
-            (int) $leave['user_id'],
-            $leave['leave_date']
-        );
+        $current = new \DateTime($leave['leave_date_from']);
+        $end     = new \DateTime($leave['leave_date_to']);
 
-        // Tidak bisa buat attendance jika jadwal belum ada atau hari libur
-        if (!$schedule || $schedule['is_day_off']) {
-            return;
-        }
+        while ($current <= $end) {
+            $dateStr  = $current->format('Y-m-d');
+            $schedule = $this->scheduleModel->findByUserAndDate((int) $leave['user_id'], $dateStr);
 
-        $checkInTime = $leave['leave_date'] . ' 00:00:00';
+            if ($schedule && !$schedule['is_day_off']) {
+                foreach ([1, 2] as $session) {
+                    $this->attendanceModel->createLeaveEntry([
+                        'user_id'           => (int) $leave['user_id'],
+                        'shift_schedule_id' => (int) $schedule['id'],
+                        'session'           => $session,
+                        'status'            => $attendanceStatus,
+                        'check_in_time'     => $dateStr . ' 00:00:00',
+                    ]);
+                }
+            }
 
-        foreach ([1, 2] as $session) {
-            $this->attendanceModel->createLeaveEntry([
-                'user_id'           => (int) $leave['user_id'],
-                'shift_schedule_id' => (int) $schedule['id'],
-                'session'           => $session,
-                'status'            => $attendanceStatus,
-                'check_in_time'     => $checkInTime,
-            ]);
+            $current->modify('+1 day');
         }
     }
 

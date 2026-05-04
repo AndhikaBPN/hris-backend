@@ -11,17 +11,18 @@ class LeaveRequest
 
     public function create(array $data): int|false
     {
-        $sql = "INSERT INTO leave_requests (user_id, leave_date, leave_type, reason, doctor_letter, status) 
-                VALUES (:user_id, :leave_date, :leave_type, :reason, :doctor_letter, :status)";
+        $sql = "INSERT INTO leave_requests (user_id, leave_date_from, leave_date_to, leave_type, reason, doctor_letter, status)
+                VALUES (:user_id, :leave_date_from, :leave_date_to, :leave_type, :reason, :doctor_letter, :status)";
 
         $stmt = $this->db->prepare($sql);
         $success = $stmt->execute([
-            'user_id' => $data['user_id'],
-            'leave_date' => $data['leave_date'],
-            'leave_type' => $data['leave_type'] ?? 'annual',
-            'reason' => $data['reason'] ?? null,
-            'doctor_letter' => $data['doctor_letter'] ?? null,
-            'status' => 'pending'
+            'user_id'        => $data['user_id'],
+            'leave_date_from' => $data['leave_date_from'],
+            'leave_date_to'   => $data['leave_date_to'],
+            'leave_type'     => $data['leave_type'] ?? 'annual',
+            'reason'         => $data['reason'] ?? null,
+            'doctor_letter'  => $data['doctor_letter'] ?? null,
+            'status'         => 'pending'
         ]);
 
         return $success ? (int) $this->db->lastInsertId() : false;
@@ -51,11 +52,11 @@ class LeaveRequest
         $lastPage = ceil($total / $limit);
 
         // Sorting
-        $sortCol = $filters['order_by'] ?? 'leave_date';
+        $sortCol = $filters['order_by'] ?? 'leave_date_from';
         $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
-        $allowedCols = ['id', 'leave_date', 'leave_type', 'status'];
+        $allowedCols = ['id', 'leave_date_from', 'leave_date_to', 'leave_type', 'status'];
         if (!in_array($sortCol, $allowedCols))
-            $sortCol = 'leave_date';
+            $sortCol = 'leave_date_from';
         if (!in_array($sortDir, ['ASC', 'DESC']))
             $sortDir = 'DESC';
 
@@ -90,11 +91,11 @@ class LeaveRequest
         $lastPage = ceil($total / $limit);
 
         // Sorting
-        $sortCol = $filters['order_by'] ?? 'lr.leave_date';
+        $sortCol = $filters['order_by'] ?? 'lr.leave_date_from';
         $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
-        $allowedCols = ['lr.id', 'lr.leave_date', 'lr.leave_type', 'u.name', 'lr.status'];
+        $allowedCols = ['lr.id', 'lr.leave_date_from', 'lr.leave_date_to', 'lr.leave_type', 'u.name', 'lr.status'];
         if (!in_array($sortCol, $allowedCols))
-            $sortCol = 'lr.leave_date';
+            $sortCol = 'lr.leave_date_from';
         if (!in_array($sortDir, ['ASC', 'DESC']))
             $sortDir = 'DESC';
 
@@ -128,17 +129,18 @@ class LeaveRequest
 
     /**
      * Get list of employees with approved leave in current month.
+     * Includes any leave range that overlaps with the current month.
      */
     public function getMonthlyApprovedLeaves(): array
     {
-        $sql = "SELECT lr.*, u.name as user_name, r.role as user_role 
-                FROM leave_requests lr 
-                JOIN users u ON lr.user_id = u.id 
+        $sql = "SELECT lr.*, u.name as user_name, r.role as user_role
+                FROM leave_requests lr
+                JOIN users u ON lr.user_id = u.id
                 JOIN role r ON r.id = u.role_id
-                WHERE lr.status = 'approved' 
-                AND MONTH(lr.leave_date) = MONTH(CURRENT_DATE()) 
-                AND YEAR(lr.leave_date) = YEAR(CURRENT_DATE())
-                ORDER BY lr.leave_date ASC";
+                WHERE lr.status = 'approved'
+                AND lr.leave_date_from <= LAST_DAY(CURRENT_DATE())
+                AND lr.leave_date_to >= DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
+                ORDER BY lr.leave_date_from ASC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
