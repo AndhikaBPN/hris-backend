@@ -53,6 +53,11 @@ class Attendance
             $params['date_to'] = $filters['date_to'];
         }
 
+        if (!empty($filters['status']) && $filters['status'] !== 'all') {
+            $sql .= " AND a.status = :status";
+            $params['status'] = $filters['status'];
+        }
+
         // Count total
         $countStmt = $this->db->prepare("SELECT COUNT(a.id) as total " . $sql);
         $countStmt->execute($params);
@@ -65,13 +70,16 @@ class Attendance
         $lastPage = ceil($total / $limit);
 
         // Sorting
-        $sortCol = $filters['order_by'] ?? 'a.check_in_time';
+        $colMap = [
+            'id'            => 'a.id',
+            'check_in_time' => 'a.check_in_time',
+            'date'          => 'ss.date',
+            'status'        => 'a.status',
+        ];
+        $sortKey = $filters['order_by'] ?? 'check_in_time';
+        $sortCol = $colMap[$sortKey] ?? 'a.check_in_time';
         $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
-        $allowedCols = ['a.id', 'a.check_in_time', 'ss.date', 'a.status'];
-        if (!in_array($sortCol, $allowedCols))
-            $sortCol = 'a.check_in_time';
-        if (!in_array($sortDir, ['ASC', 'DESC']))
-            $sortDir = 'DESC';
+        if (!in_array($sortDir, ['ASC', 'DESC'])) $sortDir = 'DESC';
 
         $sqlData = "SELECT a.*, ss.date as shift_date " . $sql . " ORDER BY $sortCol $sortDir LIMIT $limit OFFSET $offset";
         $stmt = $this->db->prepare($sqlData);
@@ -111,6 +119,11 @@ class Attendance
             $params['date_to'] = $filters['date_to'];
         }
 
+        if (!empty($filters['status']) && $filters['status'] !== 'all') {
+            $sql .= " AND a.status = :status";
+            $params['status'] = $filters['status'];
+        }
+
         // Count total
         $countStmt = $this->db->prepare("SELECT COUNT(a.id) as total " . $sql);
         $countStmt->execute($params);
@@ -123,13 +136,17 @@ class Attendance
         $lastPage = ceil($total / $limit);
 
         // Sorting
-        $sortCol = $filters['order_by'] ?? 'a.check_in_time';
+        $colMap = [
+            'id'            => 'a.id',
+            'check_in_time' => 'a.check_in_time',
+            'date'          => 'ss.date',
+            'name'          => 'u.name',
+            'status'        => 'a.status',
+        ];
+        $sortKey = $filters['order_by'] ?? 'check_in_time';
+        $sortCol = $colMap[$sortKey] ?? 'a.check_in_time';
         $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
-        $allowedCols = ['a.id', 'a.check_in_time', 'ss.date', 'u.name', 'a.status'];
-        if (!in_array($sortCol, $allowedCols))
-            $sortCol = 'a.check_in_time';
-        if (!in_array($sortDir, ['ASC', 'DESC']))
-            $sortDir = 'DESC';
+        if (!in_array($sortDir, ['ASC', 'DESC'])) $sortDir = 'DESC';
 
         $sqlData = "SELECT a.*, ss.date as shift_date, u.name as user_name " . $sql . " ORDER BY $sortCol $sortDir LIMIT $limit OFFSET $offset";
         $stmt = $this->db->prepare($sqlData);
