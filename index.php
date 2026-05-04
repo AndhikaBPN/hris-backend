@@ -12,6 +12,8 @@ require_once __DIR__ . '/bootstrap.php';
 $allowedOrigins = [
     'http://localhost:5500',
     'http://127.0.0.1:5500',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -36,10 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // ----------------------------------------------------------------
 // Router
 // ----------------------------------------------------------------
-$method    = $_SERVER['REQUEST_METHOD'];
-$uriRaw    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$uri       = rtrim($uriRaw, '/');
-$routes    = require __DIR__ . '/routes/api.php';
+$method = $_SERVER['REQUEST_METHOD'];
+$uriRaw = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$uri = rtrim($uriRaw, '/');
+$routes = require __DIR__ . '/routes/api.php';
 
 foreach ($routes as [$routeMethod, $pattern, $controllerName, $action, $allowedRoles]) {
 
@@ -55,10 +57,10 @@ foreach ($routes as [$routeMethod, $pattern, $controllerName, $action, $allowedR
 
     // Require auth jika route tidak public
     $payload = [];
-    $db      = (new Database())->getConnection();
+    $db = (new Database())->getConnection();
 
     if (!empty($allowedRoles)) {
-        $auth    = new AuthMiddleware($db);
+        $auth = new AuthMiddleware($db);
         $payload = $auth->handle();
         RoleMiddleware::require($payload, $allowedRoles);
     }
