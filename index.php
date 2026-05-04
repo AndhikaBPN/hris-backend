@@ -4,10 +4,9 @@
 // HRIS Attendance System — Front Controller
 // ================================================================
 
-require_once __DIR__ . '/bootstrap.php';
-
 // ----------------------------------------------------------------
-// CORS headers
+// CORS headers — harus di-set SEBELUM bootstrap/require apapun
+// agar tidak ada output yang menghalangi header() call
 // ----------------------------------------------------------------
 $allowedOrigins = [
     'http://localhost:5500',
@@ -34,6 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
+
+require_once __DIR__ . '/bootstrap.php';
 
 // ----------------------------------------------------------------
 // Router
