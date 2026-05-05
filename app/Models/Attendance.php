@@ -98,11 +98,25 @@ class Attendance
 
     public function getAll(array $filters = []): array
     {
+        $params = [];
+        $roleJoin = '';
+        $roleFilter = '';
+
+        if (!empty($filters['roles']) && is_array($filters['roles'])) {
+            $roleJoin = " JOIN role r ON u.role_id = r.id";
+            $rolePlaceholders = [];
+            foreach ($filters['roles'] as $i => $role) {
+                $key = "role_{$i}";
+                $rolePlaceholders[] = ":{$key}";
+                $params[$key] = $role;
+            }
+            $roleFilter = " AND r.role IN (" . implode(',', $rolePlaceholders) . ")";
+        }
+
         $sql = "FROM attendance a
                 JOIN shift_schedules ss ON a.shift_schedule_id = ss.id
-                JOIN users u ON a.user_id = u.id
-                WHERE 1=1";
-        $params = [];
+                JOIN users u ON a.user_id = u.id{$roleJoin}
+                WHERE 1=1{$roleFilter}";
 
         if (!empty($filters['date'])) {
             $sql .= " AND ss.date = :date";

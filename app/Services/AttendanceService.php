@@ -89,6 +89,11 @@ class AttendanceService
             return $this->attendanceModel->getByUserId($userId, $filters);
         }
 
+        if ($isManager && $view === 'staff') {
+            $filters['roles'] = ['staff', 'team_leader'];
+            return $this->attendanceModel->getAll($filters);
+        }
+
         if ($isManager) {
             return $this->attendanceModel->getAll($filters);
         }

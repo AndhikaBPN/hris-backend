@@ -55,8 +55,8 @@ class AttendanceController
                 ResponseHelper::error('Access denied. Only C-Level, HRD Manager, or Technical Manager can use view parameter.', 403);
                 return;
             }
-            if (!in_array($view, ['all', 'own'])) {
-                ResponseHelper::error('Invalid view parameter. Must be "all" or "own".', 422);
+            if (!in_array($view, ['all', 'own', 'staff'])) {
+                ResponseHelper::error('Invalid view parameter. Must be "all", "own", or "staff".', 422);
                 return;
             }
         }
