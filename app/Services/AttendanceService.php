@@ -81,11 +81,18 @@ class AttendanceService
         return ['attendance_id' => $attId, 'status' => $status, 'distance' => $distance];
     }
 
-    public function getHistory(int $userId, string $role, array $filters = []): array
+    public function getHistory(int $userId, string $role, array $filters = [], ?string $view = null): array
     {
-        if (in_array($role, ['c_level', 'hrd_manager', 'technical_manager'])) {
+        $isManager = in_array($role, ['c_level', 'hrd_manager', 'technical_manager']);
+
+        if ($isManager && $view === 'own') {
+            return $this->attendanceModel->getByUserId($userId, $filters);
+        }
+
+        if ($isManager) {
             return $this->attendanceModel->getAll($filters);
         }
+
         return $this->attendanceModel->getByUserId($userId, $filters);
     }
 

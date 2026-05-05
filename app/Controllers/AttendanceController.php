@@ -46,10 +46,28 @@ class AttendanceController
     {
         $authUser = $GLOBALS['auth_user'];
         $filters = $_GET ?? [];
+
+        $managerRoles = ['c_level', 'hrd_manager', 'technical_manager'];
+        $view = $filters['view'] ?? null;
+
+        if ($view !== null) {
+            if (!in_array($authUser['role'], $managerRoles)) {
+                ResponseHelper::error('Access denied. Only C-Level, HRD Manager, or Technical Manager can use view parameter.', 403);
+                return;
+            }
+            if (!in_array($view, ['all', 'own'])) {
+                ResponseHelper::error('Invalid view parameter. Must be "all" or "own".', 422);
+                return;
+            }
+        }
+
+        unset($filters['view']);
+
         $result = $this->service->getHistory(
             (int) $authUser['id'],
             $authUser['role'],
-            $filters
+            $filters,
+            $view
         );
         ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
     }
