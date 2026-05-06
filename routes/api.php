@@ -55,6 +55,7 @@ return [
     ['GET', '/api/attendance', 'AttendanceController', 'index', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/attendance/today', 'AttendanceController', 'today', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/attendance/subordinates/today', 'AttendanceController', 'subordinatesToday', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader']],
+    ['GET', '/api/attendance/summary', 'AttendanceController', 'summary', ['c_level', 'hrd_manager']],
 
     // ----------------------------------------------------------------
     // Leave

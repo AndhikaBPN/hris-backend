@@ -85,6 +85,14 @@ class AttendanceController
         ResponseHelper::success($data, 'Today\'s attendance fetched successfully');
     }
 
+    // GET /api/attendance/summary?month=YYYY-MM
+    public function summary(): void
+    {
+        $month = $_GET['month'] ?? null;
+        $data = $this->service->getMonthlySummary($month);
+        ResponseHelper::success($data, 'Monthly attendance summary fetched successfully');
+    }
+
     // GET /api/attendance/subordinates/today
     public function subordinatesToday(): void
     {

@@ -225,6 +225,76 @@ class Attendance
     }
 
     /**
+     * Aggregate monthly attendance summary per user, excluding c_level.
+     * Returns one row per user with working days, valid, late, and leave counts.
+     */
+    public function getMonthlySummary(int $year, int $month): array
+    {
+        $sql = "SELECT
+                    u.id          AS user_id,
+                    u.name        AS user_name,
+                    t.team_name,
+                    COALESCE(ws.total_working_days, 0) AS total_working_days,
+                    COALESCE(att.total_valid, 0)       AS total_valid,
+                    COALESCE(att.total_late, 0)        AS total_late,
+                    COALESCE(lv.total_leave_days, 0)   AS total_leave
+                FROM users u
+                LEFT JOIN `team` t ON u.team_id = t.id
+                JOIN `role` r ON u.role_id = r.id
+                LEFT JOIN (
+                    SELECT user_id, COUNT(*) AS total_working_days
+                    FROM shift_schedules
+                    WHERE is_day_off = 0
+                      AND YEAR(date) = :ws_year AND MONTH(date) = :ws_month
+                    GROUP BY user_id
+                ) ws ON ws.user_id = u.id
+                LEFT JOIN (
+                    SELECT
+                        a.user_id,
+                        COUNT(DISTINCT CASE WHEN a.status = 'valid' THEN ss.date END) AS total_valid,
+                        COUNT(DISTINCT CASE WHEN a.status = 'late'  THEN ss.date END) AS total_late
+                    FROM attendance a
+                    JOIN shift_schedules ss ON a.shift_schedule_id = ss.id
+                    WHERE YEAR(ss.date) = :att_year AND MONTH(ss.date) = :att_month
+                    GROUP BY a.user_id
+                ) att ON att.user_id = u.id
+                LEFT JOIN (
+                    SELECT
+                        lr.user_id,
+                        SUM(
+                            DATEDIFF(
+                                LEAST(lr.leave_date_to,   LAST_DAY(DATE(:month_ref))),
+                                GREATEST(lr.leave_date_from, DATE_FORMAT(DATE(:month_ref2), '%Y-%m-01'))
+                            ) + 1
+                        ) AS total_leave_days
+                    FROM leave_requests lr
+                    WHERE lr.status = 'approved'
+                      AND lr.leave_date_from <= LAST_DAY(DATE(:month_ref3))
+                      AND lr.leave_date_to   >= DATE_FORMAT(DATE(:month_ref4), '%Y-%m-01')
+                    GROUP BY lr.user_id
+                ) lv ON lv.user_id = u.id
+                WHERE r.role != 'c_level'
+                  AND u.is_active = 1
+                ORDER BY u.name ASC";
+
+        $monthRef = sprintf('%d-%02d-01', $year, $month);
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'ws_year'    => $year,
+            'ws_month'   => $month,
+            'att_year'   => $year,
+            'att_month'  => $month,
+            'month_ref'  => $monthRef,
+            'month_ref2' => $monthRef,
+            'month_ref3' => $monthRef,
+            'month_ref4' => $monthRef,
+        ]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Insert attendance record for approved leave/sick-leave/permit.
      * Uses INSERT IGNORE so existing real attendance is never overwritten.
      */

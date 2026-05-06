@@ -27,7 +27,8 @@ class AttendanceService
         string $faceImage = ''
     ): array {
         $todayStr = date('Y-m-d');
-        $schedules = $this->scheduleModel->getByUserId($userId, ['date' => $todayStr]);
+        $result    = $this->scheduleModel->getByUserId($userId, ['date' => $todayStr]);
+        $schedules = $result['data'] ?? [];
 
         if (empty($schedules) || $schedules[0]['is_day_off']) {
             $msg = 'No active shift schedule today or it is a day off';
@@ -38,9 +39,9 @@ class AttendanceService
         $schedule = $schedules[0];
 
         // Cek duplicate session
-        $existing = $this->attendanceModel->getByUserId($userId, ['date' => $todayStr]);
+        $existing = $this->attendanceModel->todayByUserId($userId);
         foreach ($existing as $att) {
-            if ($att['session'] == $session) {
+            if ((int) $att['session'] === $session) {
                 $msg = "You have already clocked in for session $session today";
                 $this->logModel->create(['user_id' => $userId, 'session' => $session, 'message' => "Fail: $msg"]);
                 throw new \RuntimeException($msg);
@@ -61,19 +62,22 @@ class AttendanceService
             throw new \RuntimeException("Your location radius exceeds the 50m limit ($distance meters)");
         }
 
-        // 3. Tentukan status valid/late
+        // 3. Auto-fill sesi sebelumnya yang terlewat sebagai invalid
+        $this->autoFillMissingSessions($userId, $schedule, $session);
+
+        // 4. Tentukan status valid/late
         $status = $this->resolveStatus($schedule, $session, new \DateTime());
 
-        // 4. Save
+        // 5. Save
         $attId = $this->attendanceModel->create([
-            'user_id' => $userId,
-            'shift_schedule_id' => $schedule['id'],
-            'session' => $session,
-            'face_image' => $faceImage,
-            'latitude' => $latitude,
-            'longitude' => $longitude,
+            'user_id'            => $userId,
+            'shift_schedule_id'  => $schedule['id'],
+            'session'            => $session,
+            'face_image'         => $faceImage,
+            'latitude'           => $latitude,
+            'longitude'          => $longitude,
             'distance_to_office' => $distance,
-            'status' => $status
+            'status'             => $status,
         ]);
 
         $this->logModel->create(['attendance_id' => $attId, 'user_id' => $userId, 'session' => $session, 'message' => "Success: Clock in session $session - $status"]);
@@ -99,6 +103,32 @@ class AttendanceService
         }
 
         return $this->attendanceModel->getByUserId($userId, $filters);
+    }
+
+    private function autoFillMissingSessions(int $userId, array $schedule, int $currentSession): void
+    {
+        $todayAttendance = $this->attendanceModel->todayByUserId($userId);
+        $presentSessions = array_map('intval', array_column($todayAttendance, 'session'));
+
+        for ($s = 1; $s < $currentSession; $s++) {
+            if (in_array($s, $presentSessions, true)) {
+                continue;
+            }
+
+            $this->attendanceModel->create([
+                'user_id'           => $userId,
+                'shift_schedule_id' => $schedule['id'],
+                'session'           => $s,
+                'status'            => 'invalid',
+                'check_in_time'     => date('Y-m-d H:i:s'),
+            ]);
+
+            $this->logModel->create([
+                'user_id' => $userId,
+                'session' => $s,
+                'message' => "Auto-fill: Session {$s} marked invalid (missed clock-in)",
+            ]);
+        }
     }
 
     private function resolveStatus(array $shift, int $session, \DateTime $checkInTime): string
@@ -197,5 +227,42 @@ class AttendanceService
     public function getTodaySubordinateAttendance(int $managerId): array
     {
         return $this->attendanceModel->getTodayByManagerId($managerId);
+    }
+
+    /**
+     * Monthly attendance summary for all non-c_level users.
+     * Accepts optional YYYY-MM string; defaults to current month.
+     */
+    public function getMonthlySummary(?string $month = null): array
+    {
+        if ($month && preg_match('/^\d{4}-\d{2}$/', $month)) {
+            [$year, $mon] = explode('-', $month);
+        } else {
+            $year = (int) date('Y');
+            $mon  = (int) date('m');
+        }
+
+        $rows = $this->attendanceModel->getMonthlySummary((int) $year, (int) $mon);
+
+        return array_map(function (array $row) {
+            $workingDays = (int) $row['total_working_days'];
+            $valid       = (int) $row['total_valid'];
+            $late        = (int) $row['total_late'];
+            $leave       = (int) $row['total_leave'];
+            $invalid     = max(0, $workingDays - $valid - $late - $leave);
+            $rate        = $workingDays > 0 ? round(($valid / $workingDays) * 100, 2) : 0;
+
+            return [
+                'user_id'            => (int) $row['user_id'],
+                'user_name'          => $row['user_name'],
+                'team_name'          => $row['team_name'],
+                'total_working_days' => $workingDays,
+                'total_valid'        => $valid,
+                'total_late'         => $late,
+                'total_invalid'      => $invalid,
+                'total_leave'        => $leave,
+                'rate'               => $rate,
+            ];
+        }, $rows);
     }
 }
