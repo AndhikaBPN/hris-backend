@@ -71,15 +71,16 @@ class Attendance
 
         // Sorting
         $colMap = [
-            'id'            => 'a.id',
+            'id' => 'a.id',
             'check_in_time' => 'a.check_in_time',
-            'date'          => 'ss.date',
-            'status'        => 'a.status',
+            'date' => 'ss.date',
+            'status' => 'a.status',
         ];
         $sortKey = $filters['order_by'] ?? 'check_in_time';
         $sortCol = $colMap[$sortKey] ?? 'a.check_in_time';
         $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
-        if (!in_array($sortDir, ['ASC', 'DESC'])) $sortDir = 'DESC';
+        if (!in_array($sortDir, ['ASC', 'DESC']))
+            $sortDir = 'DESC';
 
         $sqlData = "SELECT a.*, ss.date as shift_date " . $sql . " ORDER BY $sortCol $sortDir LIMIT $limit OFFSET $offset";
         $stmt = $this->db->prepare($sqlData);
@@ -151,16 +152,17 @@ class Attendance
 
         // Sorting
         $colMap = [
-            'id'            => 'a.id',
+            'id' => 'a.id',
             'check_in_time' => 'a.check_in_time',
-            'date'          => 'ss.date',
-            'name'          => 'u.name',
-            'status'        => 'a.status',
+            'date' => 'ss.date',
+            'name' => 'u.name',
+            'status' => 'a.status',
         ];
         $sortKey = $filters['order_by'] ?? 'check_in_time';
         $sortCol = $colMap[$sortKey] ?? 'a.check_in_time';
         $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
-        if (!in_array($sortDir, ['ASC', 'DESC'])) $sortDir = 'DESC';
+        if (!in_array($sortDir, ['ASC', 'DESC']))
+            $sortDir = 'DESC';
 
         $sqlData = "SELECT a.*, ss.date as shift_date, u.name as user_name " . $sql . " ORDER BY $sortCol $sortDir LIMIT $limit OFFSET $offset";
         $stmt = $this->db->prepare($sqlData);
@@ -245,7 +247,7 @@ class Attendance
                     SELECT user_id, COUNT(*) AS total_working_days
                     FROM shift_schedules
                     WHERE is_day_off = 0
-                      AND YEAR(date) = :ws_year AND MONTH(date) = :ws_month
+                    AND YEAR(date) = :ws_year AND MONTH(date) = :ws_month
                     GROUP BY user_id
                 ) ws ON ws.user_id = u.id
                 LEFT JOIN (
@@ -269,23 +271,23 @@ class Attendance
                         ) AS total_leave_days
                     FROM leave_requests lr
                     WHERE lr.status = 'approved'
-                      AND lr.leave_date_from <= LAST_DAY(DATE(:month_ref3))
-                      AND lr.leave_date_to   >= DATE_FORMAT(DATE(:month_ref4), '%Y-%m-01')
+                    AND lr.leave_date_from <= LAST_DAY(DATE(:month_ref3))
+                    AND lr.leave_date_to   >= DATE_FORMAT(DATE(:month_ref4), '%Y-%m-01')
                     GROUP BY lr.user_id
                 ) lv ON lv.user_id = u.id
                 WHERE r.role != 'c_level'
-                  AND u.is_active = 1
+                AND u.is_active = 1
                 ORDER BY u.name ASC";
 
         $monthRef = sprintf('%d-%02d-01', $year, $month);
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
-            'ws_year'    => $year,
-            'ws_month'   => $month,
-            'att_year'   => $year,
-            'att_month'  => $month,
-            'month_ref'  => $monthRef,
+            'ws_year' => $year,
+            'ws_month' => $month,
+            'att_year' => $year,
+            'att_month' => $month,
+            'month_ref' => $monthRef,
             'month_ref2' => $monthRef,
             'month_ref3' => $monthRef,
             'month_ref4' => $monthRef,
