@@ -11,11 +11,17 @@ class Team
 
     public function all(array $filters = []): array
     {
-        $sql = "FROM team WHERE 1=1";
+        $sql = "FROM team t WHERE 1=1";
         $params = [];
 
+        // Search filter
+        if (!empty($filters['search'])) {
+            $sql .= " AND t.team_name LIKE :search";
+            $params['search'] = '%' . $filters['search'] . '%';
+        }
+
         // Count total
-        $countStmt = $this->db->prepare("SELECT COUNT(id) as total " . $sql);
+        $countStmt = $this->db->prepare("SELECT COUNT(t.id) as total " . $sql);
         $countStmt->execute($params);
         $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
@@ -32,10 +38,17 @@ class Team
         if (!in_array($sortCol, $allowedCols)) $sortCol = 'id';
         if (!in_array($sortDir, ['ASC', 'DESC'])) $sortDir = 'DESC';
 
-        $sqlData = "SELECT t.*, u.name as team_lead_name 
-                    FROM team t 
-                    LEFT JOIN users u ON t.team_lead_id = u.id 
-                    ORDER BY t.$sortCol $sortDir LIMIT $limit OFFSET $offset";
+        $sqlData = "SELECT t.*, u.name as team_lead_name,
+                           (SELECT COUNT(*) FROM users WHERE team_id = t.id) as total_member
+                    FROM team t
+                    LEFT JOIN users u ON t.team_lead_id = u.id
+                    WHERE 1=1";
+
+        if (!empty($filters['search'])) {
+            $sqlData .= " AND t.team_name LIKE :search";
+        }
+
+        $sqlData .= " ORDER BY t.$sortCol $sortDir LIMIT $limit OFFSET $offset";
         $stmt = $this->db->prepare($sqlData);
         $stmt->execute($params);
 

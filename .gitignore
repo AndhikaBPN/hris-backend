@@ -57,3 +57,6 @@ debug.php
 .agents
 .claude
 claude.md
+ruvector.db
+agentdb.rvf
+agentdb.rvf.lock
