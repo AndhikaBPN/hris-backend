@@ -22,6 +22,7 @@ return [
     // ----------------------------------------------------------------
     ['GET', '/api/users/count', 'UserController', 'countActive', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/users/birthdays', 'UserController', 'birthdays', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/users/team-leaders', 'UserController', 'teamLeaders', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/users', 'UserController', 'index', ['c_level', 'hrd_manager']],
     ['GET', '/api/users/{id}', 'UserController', 'show', ['c_level', 'hrd_manager']],
     ['POST', '/api/users', 'UserController', 'store', ['c_level', 'hrd_manager']],
@@ -32,8 +33,8 @@ return [
     // Team Management
     // ----------------------------------------------------------------
     ['GET', '/api/teams/count', 'TeamController', 'count', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
-    ['GET', '/api/teams', 'TeamController', 'index', ['c_level', 'hrd_manager', 'technical_manager']],
-    ['GET', '/api/teams/{id}', 'TeamController', 'show', ['c_level', 'hrd_manager', 'technical_manager']],
+    ['GET', '/api/teams', 'TeamController', 'index', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/teams/{id}', 'TeamController', 'show', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['POST', '/api/teams', 'TeamController', 'store', ['c_level', 'hrd_manager', 'technical_manager']],
     ['PUT', '/api/teams/{id}', 'TeamController', 'update', ['c_level', 'hrd_manager', 'technical_manager']],
     ['DELETE', '/api/teams/{id}', 'TeamController', 'destroy', ['c_level', 'hrd_manager', 'technical_manager']],

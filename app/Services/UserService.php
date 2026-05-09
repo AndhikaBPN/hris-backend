@@ -104,4 +104,20 @@ class UserService
     {
         return $this->userModel->countActive();
     }
+
+    /** Ambil daftar team leader yang aktif. */
+    public function getTeamLeaders(array $filters = []): array
+    {
+        $filters['role_id'] = 4;
+        $filters['is_active'] = 1;
+
+        $result = $this->userModel->all($filters);
+
+        $result['data'] = array_map(function ($user) {
+            unset($user['password'], $user['email'], $user['birth_date'], $user['manager_id'], $user['team_id']);
+            return $user;
+        }, $result['data']);
+
+        return $result;
+    }
 }

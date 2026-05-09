@@ -124,14 +124,14 @@ php migrate.php
 ```
 
 ### 5. Run Project
-Using PHP built-in server:
+Using Composer script:
 ```bash
-php -S 127.0.0.1:8000 -t . router.php
+composer serve
 ```
 
-or
+Or manually with PHP built-in server:
 ```bash
-php -S localhost:8000 -t . router.php
+php -S 127.0.0.1:8000 -t . index.php
 ```
 
 API will be available at:
