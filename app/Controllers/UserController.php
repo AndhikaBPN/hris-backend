@@ -31,6 +31,14 @@ class UserController
         ResponseHelper::success(['total' => $count], 'OK');
     }
 
+    // GET /api/users/team-leaders
+    public function teamLeaders(): void
+    {
+        $filters = $_GET ?? [];
+        $result = $this->service->getTeamLeaders($filters);
+        ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
+    }
+
     // GET /api/users/{id}
     public function show(int $id): void
     {
