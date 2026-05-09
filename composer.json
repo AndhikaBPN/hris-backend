@@ -4,7 +4,11 @@
         "firebase/php-jwt": "^7.0",
         "phpmailer/phpmailer": "^7.0"
     },
+    "config": {
+        "process-timeout": 0
+    },
     "scripts": {
-        "test": "php tests/run.php"
+        "test": "php tests/run.php",
+        "serve": "php -S 127.0.0.1:8000 -t . index.php"
     }
 }
