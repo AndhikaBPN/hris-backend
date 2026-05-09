@@ -55,3 +55,5 @@ debug.php
 *.bak
 *.old
 .agents
+.claude
+claude.md
