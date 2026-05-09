@@ -26,7 +26,7 @@ HRIS Backend - Human Resource Information System for employee attendance trackin
 composer install                          # Install dependencies
 cp .env.example .env                      # Copy env config, update DB credentials
 php migrate.php                           # Run migrations (001-014)
-php -S 127.0.0.1:8000 -t . index.php     # Start dev server
+composer serve                            # Start dev server
 ```
 
 API root: `http://127.0.0.1:8000`
