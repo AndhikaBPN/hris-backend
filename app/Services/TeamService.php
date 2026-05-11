@@ -3,10 +3,12 @@
 class TeamService
 {
     private Team $teamModel;
+    private User $userModel;
 
     public function __construct(PDO $db)
     {
         $this->teamModel = new Team($db);
+        $this->userModel = new User($db);
     }
 
     public function getAll(array $filters = []): array
@@ -20,6 +22,8 @@ class TeamService
         if (!$team) {
             throw new \InvalidArgumentException('Team not found');
         }
+
+        $team['members'] = $this->teamModel->getMembersByTeamId($id);
 
         return $team;
     }
