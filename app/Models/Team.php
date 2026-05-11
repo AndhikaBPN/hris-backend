@@ -116,7 +116,7 @@ class Team
     public function getMembersByTeamId(int $teamId): array
     {
         $stmt = $this->db->prepare("
-            SELECT u.id, u.name, u.email, u.role_id, r.role as role_name
+            SELECT u.id, u.name, u.email, u.created_at, u.role_id, r.role as role_name
             FROM users u
             LEFT JOIN `role` r ON u.role_id = r.id
             WHERE u.team_id = :team_id AND u.is_active = 1
@@ -124,5 +124,17 @@ class Team
         ");
         $stmt->execute(['team_id' => $teamId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getTotalMembersByTeamId(int $teamId): int
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) as total
+            FROM users
+            WHERE team_id = :team_id AND is_active = 1
+        ");
+        $stmt->execute(['team_id' => $teamId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int) ($row['total'] ?? 0);
     }
 }

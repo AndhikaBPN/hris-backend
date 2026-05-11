@@ -24,6 +24,7 @@ class TeamService
         }
 
         $team['members'] = $this->teamModel->getMembersByTeamId($id);
+        $team['total_member'] = $this->teamModel->getTotalMembersByTeamId($id);
 
         return $team;
     }
@@ -40,7 +41,7 @@ class TeamService
         }
 
         $id = $this->teamModel->create([
-            'team_name'    => $teamName,
+            'team_name' => $teamName,
             'team_lead_id' => $data['team_lead_id'] ?? null
         ]);
         if (!$id) {
@@ -68,7 +69,7 @@ class TeamService
         }
 
         return $this->teamModel->update($id, [
-            'team_name'    => $teamName,
+            'team_name' => $teamName,
             'team_lead_id' => $data['team_lead_id'] ?? null
         ]);
     }
