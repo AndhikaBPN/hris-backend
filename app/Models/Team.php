@@ -119,7 +119,7 @@ class Team
             SELECT u.id, u.name, u.email, u.created_at, u.role_id, r.role as role_name
             FROM users u
             LEFT JOIN `role` r ON u.role_id = r.id
-            WHERE u.team_id = :team_id AND u.is_active = 1
+            WHERE u.team_id = :team_id AND u.role_id = 5 AND u.is_active = 1
             ORDER BY u.name ASC
         ");
         $stmt->execute(['team_id' => $teamId]);
