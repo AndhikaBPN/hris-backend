@@ -40,6 +40,12 @@ class LeaveService
             throw new \InvalidArgumentException('leave_date_from and leave_date_to are required');
         }
 
+        // Validate date format (must be YYYY-MM-DD)
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $data['leave_date_from']) ||
+            !preg_match('/^\d{4}-\d{2}-\d{2}$/', $data['leave_date_to'])) {
+            throw new \InvalidArgumentException('leave_date_from and leave_date_to must be in YYYY-MM-DD format');
+        }
+
         if ($data['leave_date_to'] < $data['leave_date_from']) {
             throw new \InvalidArgumentException('leave_date_to must be equal to or after leave_date_from');
         }

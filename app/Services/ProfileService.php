@@ -51,8 +51,12 @@ class ProfileService
             throw new \RuntimeException('Invalid email or OTP');
         }
 
-        // Verifikasi OTP tipe 'reset_password'
-        // $this->otpService->verifyOtp($email, $otpCode);
+        // Verifikasi OTP tipe 'reset_password' — MUST SUCCEED or throw exception
+        try {
+            $this->otpService->verifyOtp($email, $otpCode, 'reset_password');
+        } catch (\RuntimeException $e) {
+            throw new \RuntimeException('Invalid or expired OTP');
+        }
 
         // Jika valid, ganti password
         $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);

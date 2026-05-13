@@ -153,6 +153,10 @@ class ShiftService
             throw new \InvalidArgumentException('User not found');
         }
 
+        if (!$this->isValidDate($startDate)) {
+            throw new \InvalidArgumentException('start_date must be in YYYY-MM-DD format');
+        }
+
         $currentDate = new \DateTime($startDate);
 
         for ($i = 0; $i < $days; $i++) {

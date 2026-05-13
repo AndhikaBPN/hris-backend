@@ -28,7 +28,10 @@ class AttendanceService
     ): array {
         $todayStr = date('Y-m-d');
         $result    = $this->scheduleModel->getByUserId($userId, ['date' => $todayStr]);
-        $schedules = $result['data'] ?? [];
+        if (!is_array($result) || !isset($result['data'])) {
+            throw new \RuntimeException('Failed to retrieve shift schedule');
+        }
+        $schedules = $result['data'];
 
         if (empty($schedules) || $schedules[0]['is_day_off']) {
             $msg = 'No active shift schedule today or it is a day off';

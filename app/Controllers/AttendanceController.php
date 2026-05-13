@@ -26,6 +26,16 @@ class AttendanceController
             return;
         }
 
+        if (empty($faceData) || !is_array($faceData)) {
+            ResponseHelper::error('Face embedding array is required and must not be empty', 422);
+            return;
+        }
+
+        if ($latitude === 0.0 || $longitude === 0.0) {
+            ResponseHelper::error('Valid GPS coordinates (latitude and longitude) are required', 422);
+            return;
+        }
+
         try {
             $result = $this->service->clockIn(
                 (int) $authUser['id'],

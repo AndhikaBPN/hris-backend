@@ -38,8 +38,14 @@ class AuthController
     public function logout(): void
     {
         $headers = getallheaders();
-        $token = substr($headers['Authorization'] ?? '', 7);
+        $auth = $headers['Authorization'] ?? '';
 
+        if (!str_starts_with($auth, 'Bearer ')) {
+            ResponseHelper::error('Invalid or missing token', 401);
+            return;
+        }
+
+        $token = substr($auth, 7);
         $this->service->logout($token);
         ResponseHelper::success(null, 'Logout successful');
     }

@@ -86,7 +86,7 @@ class Role
 
     public function count(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) as total FROM `role` text");
+        $stmt = $this->db->query("SELECT COUNT(*) as total FROM `role`");
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return (int) ($row['total'] ?? 0);
     }
