@@ -179,33 +179,36 @@ class TeamService
 
         foreach ($addIds as $userId) {
             if (!isset($userMap[$userId])) {
-                throw new \InvalidArgumentException("User ID $userId does not exist");
+                throw new \InvalidArgumentException("No user found with ID $userId.");
             }
 
             $user = $userMap[$userId];
+            $name = $user['name'];
 
             if (!(bool) $user['is_active']) {
-                throw new \InvalidArgumentException("User ID $userId is inactive and cannot be added to a team");
+                throw new \InvalidArgumentException("$name is no longer active and cannot be added to a team.");
             }
 
             if (!in_array((int) $user['role_id'], $allowedRoleIds, true)) {
                 throw new \InvalidArgumentException(
-                    "User ID $userId does not have an eligible role (team_leader or staff)"
+                    "$name cannot be added as a member because their role is not eligible (must be staff or team leader)."
                 );
             }
 
             if ((int) ($user['team_id'] ?? 0) === $teamId) {
-                throw new \InvalidArgumentException("User ID $userId is already a member of this team");
+                throw new \InvalidArgumentException("$name is already a member of this team.");
             }
         }
 
         foreach ($removeIds as $userId) {
             if (!isset($userMap[$userId])) {
-                throw new \InvalidArgumentException("User ID $userId does not exist");
+                throw new \InvalidArgumentException("No user found with ID $userId.");
             }
 
+            $name = $userMap[$userId]['name'];
+
             if ((int) ($userMap[$userId]['team_id'] ?? 0) !== $teamId) {
-                throw new \InvalidArgumentException("User ID $userId is not a member of this team");
+                throw new \InvalidArgumentException("$name is not a member of this team and cannot be removed.");
             }
         }
     }
