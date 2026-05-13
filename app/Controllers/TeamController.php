@@ -51,8 +51,8 @@ class TeamController
     public function update(int $id): void
     {
         try {
-            $this->service->update($id, $this->json());
-            ResponseHelper::success(null, 'Team updated successfully');
+            $team = $this->service->update($id, $this->json());
+            ResponseHelper::success($team, 'Team updated successfully');
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
         } catch (\RuntimeException $e) {

@@ -137,4 +137,85 @@ class Team
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return (int) ($row['total'] ?? 0);
     }
+
+    /**
+     * Fetch minimal user rows for a set of IDs: id, role_id, team_id, is_active.
+     * Used by TeamService to validate add/remove candidates in bulk.
+     *
+     * @param  int[] $userIds
+     * @return array  keyed by user id
+     */
+    public function findUsersByIds(array $userIds): array
+    {
+        if (empty($userIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        $stmt = $this->db->prepare(
+            "SELECT u.id, u.role_id, u.team_id, u.is_active, u.name
+             FROM users u
+             WHERE u.id IN ($placeholders)"
+        );
+        $stmt->execute(array_values($userIds));
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Re-key by id for O(1) lookup in the service layer
+        $indexed = [];
+        foreach ($rows as $row) {
+            $indexed[(int) $row['id']] = $row;
+        }
+
+        return $indexed;
+    }
+
+    /**
+     * Assign team_id to a list of users (add members).
+     * Operates only on rows that are currently unassigned or assigned elsewhere;
+     * the service layer is responsible for filtering already-in-team IDs out.
+     *
+     * @param  int   $teamId
+     * @param  int[] $userIds
+     * @return bool
+     */
+    public function addMembers(int $teamId, array $userIds): bool
+    {
+        if (empty($userIds)) {
+            return true;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        $params = [$teamId, ...array_values($userIds)];
+
+        $stmt = $this->db->prepare(
+            "UPDATE users SET team_id = ? WHERE id IN ($placeholders)"
+        );
+
+        return $stmt->execute($params);
+    }
+
+    /**
+     * Clear team_id for a list of users (remove members).
+     * The WHERE clause includes team_id = ? so we never accidentally
+     * unlink users that belong to a different team.
+     *
+     * @param  int   $teamId
+     * @param  int[] $userIds
+     * @return bool
+     */
+    public function removeMembers(int $teamId, array $userIds): bool
+    {
+        if (empty($userIds)) {
+            return true;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        $params = [$teamId, ...array_values($userIds)];
+
+        $stmt = $this->db->prepare(
+            "UPDATE users SET team_id = NULL WHERE team_id = ? AND id IN ($placeholders)"
+        );
+
+        return $stmt->execute($params);
+    }
 }
