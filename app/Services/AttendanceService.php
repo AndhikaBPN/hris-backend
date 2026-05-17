@@ -21,13 +21,12 @@ class AttendanceService
     public function clockIn(
         int $userId,
         int $session,
-        array $faceData,
-        float $latitude,
-        float $longitude,
-        string $faceImage = ''
+        string $faceImage = '',
+        float $latitude = 0,
+        float $longitude = 0
     ): array {
         $todayStr = date('Y-m-d');
-        $result    = $this->scheduleModel->getByUserId($userId, ['date' => $todayStr]);
+        $result   = $this->scheduleModel->getByUserId($userId, ['date' => $todayStr]);
         if (!is_array($result) || !isset($result['data'])) {
             throw new \RuntimeException('Failed to retrieve shift schedule');
         }
@@ -51,41 +50,26 @@ class AttendanceService
             }
         }
 
-        // 1. Validasi Wajah (Euclidean Distance <= 0.5)
-        $isFaceValid = $this->validateFace($userId, $faceData);
-        if (!$isFaceValid) {
-            $this->logModel->create(['user_id' => $userId, 'session' => $session, 'message' => 'Fail: Face not recognized']);
-            throw new \RuntimeException('Face not recognized');
-        }
-
-        // 2. Validasi Jarak (Haversine <= 50 meter)
-        $distance = $this->calculateDistanceToOffice($latitude, $longitude);
-        if ($distance > 50) {
-            $this->logModel->create(['user_id' => $userId, 'session' => $session, 'message' => "Fail: Distance outside radius ($distance meters)"]);
-            throw new \RuntimeException("Your location radius exceeds the 50m limit ($distance meters)");
-        }
-
-        // 3. Auto-fill sesi sebelumnya yang terlewat sebagai invalid
+        // 1. Auto-fill sesi sebelumnya yang terlewat sebagai invalid
         $this->autoFillMissingSessions($userId, $schedule, $session);
 
-        // 4. Tentukan status valid/late
+        // 2. Tentukan status: valid jika <= start_time + 15 menit, late jika lewat
         $status = $this->resolveStatus($schedule, $session, new \DateTime());
 
-        // 5. Save
+        // 3. Save
         $attId = $this->attendanceModel->create([
-            'user_id'            => $userId,
-            'shift_schedule_id'  => $schedule['id'],
-            'session'            => $session,
-            'face_image'         => $faceImage,
-            'latitude'           => $latitude,
-            'longitude'          => $longitude,
-            'distance_to_office' => $distance,
-            'status'             => $status,
+            'user_id'           => $userId,
+            'shift_schedule_id' => $schedule['id'],
+            'session'           => $session,
+            'face_image'        => $faceImage,
+            'latitude'          => $latitude ?: null,
+            'longitude'         => $longitude ?: null,
+            'status'            => $status,
         ]);
 
         $this->logModel->create(['attendance_id' => $attId, 'user_id' => $userId, 'session' => $session, 'message' => "Success: Clock in session $session - $status"]);
 
-        return ['attendance_id' => $attId, 'status' => $status, 'distance' => $distance];
+        return ['attendance_id' => $attId, 'status' => $status];
     }
 
     public function getHistory(int $userId, string $role, array $filters = [], ?string $view = null): array

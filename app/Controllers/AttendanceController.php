@@ -16,23 +16,12 @@ class AttendanceController
         $body = $this->json();
 
         $session = (int) ($body['session'] ?? 0);
-        $faceData = $body['face_embedding'] ?? [];
+        $faceImage = $body['face_image'] ?? '';
         $latitude = (float) ($body['latitude'] ?? 0);
         $longitude = (float) ($body['longitude'] ?? 0);
-        $faceImage = $body['face_image'] ?? '';
 
         if (!in_array($session, [1, 2], true)) {
             ResponseHelper::error('Session must be 1 or 2', 422);
-            return;
-        }
-
-        if (empty($faceData) || !is_array($faceData)) {
-            ResponseHelper::error('Face embedding array is required and must not be empty', 422);
-            return;
-        }
-
-        if ($latitude === 0.0 || $longitude === 0.0) {
-            ResponseHelper::error('Valid GPS coordinates (latitude and longitude) are required', 422);
             return;
         }
 
@@ -40,10 +29,9 @@ class AttendanceController
             $result = $this->service->clockIn(
                 (int) $authUser['id'],
                 $session,
-                $faceData,
+                $faceImage,
                 $latitude,
-                $longitude,
-                $faceImage
+                $longitude
             );
             ResponseHelper::success($result, 'Attendance recorded successfully', 201);
         } catch (\RuntimeException $e) {
