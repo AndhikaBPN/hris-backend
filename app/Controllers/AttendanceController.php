@@ -9,7 +9,7 @@ class AttendanceController
         $this->service = new AttendanceService($db);
     }
 
-    // POST /api/attendance
+    // POST /api/attendance/clock-in
     public function store(): void
     {
         $authUser = $GLOBALS['auth_user'];
@@ -37,6 +37,34 @@ class AttendanceController
         } catch (\RuntimeException $e) {
             ResponseHelper::error($e->getMessage(), 400);
         }
+    }
+
+    // POST /api/attendance/clock-out
+    public function clockOut(): void
+    {
+        $authUser = $GLOBALS['auth_user'];
+
+        try {
+            $result = $this->service->clockOut((int) $authUser['id']);
+            ResponseHelper::success($result, 'Clock-out recorded successfully');
+        } catch (\RuntimeException $e) {
+            ResponseHelper::error($e->getMessage(), 400);
+        }
+    }
+
+    // GET /api/attendance/my?date=YYYY-MM-DD
+    public function my(): void
+    {
+        $authUser = $GLOBALS['auth_user'];
+        $date = $_GET['date'] ?? null;
+
+        if ($date && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            ResponseHelper::error('Invalid date format. Use YYYY-MM-DD', 422);
+            return;
+        }
+
+        $data = $this->service->getMyToday((int) $authUser['id'], $date);
+        ResponseHelper::success($data, 'OK');
     }
 
     // GET /api/attendance

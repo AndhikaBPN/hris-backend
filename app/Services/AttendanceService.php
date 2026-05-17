@@ -23,10 +23,11 @@ class AttendanceService
         int $session,
         string $faceImage = '',
         float $latitude = 0,
-        float $longitude = 0
+        float $longitude = 0,
+        float $distanceToOffice = 0
     ): array {
         $todayStr = date('Y-m-d');
-        $result   = $this->scheduleModel->getByUserId($userId, ['date' => $todayStr]);
+        $result = $this->scheduleModel->getByUserId($userId, ['date' => $todayStr]);
         if (!is_array($result) || !isset($result['data'])) {
             throw new \RuntimeException('Failed to retrieve shift schedule');
         }
@@ -58,18 +59,64 @@ class AttendanceService
 
         // 3. Save
         $attId = $this->attendanceModel->create([
-            'user_id'           => $userId,
+            'user_id' => $userId,
             'shift_schedule_id' => $schedule['id'],
-            'session'           => $session,
-            'face_image'        => $faceImage,
-            'latitude'          => $latitude ?: null,
-            'longitude'         => $longitude ?: null,
-            'status'            => $status,
+            'session' => $session,
+            'face_image' => $faceImage,
+            'latitude' => $latitude ?: null,
+            'longitude' => $longitude ?: null,
+            'distance_to_office' => $distanceToOffice ?: null,
+            'status' => $status,
         ]);
 
         $this->logModel->create(['attendance_id' => $attId, 'user_id' => $userId, 'session' => $session, 'message' => "Success: Clock in session $session - $status"]);
 
         return ['attendance_id' => $attId, 'status' => $status];
+    }
+
+    public function clockOut(int $userId): array
+    {
+        $today = $this->attendanceModel->todayByUserId($userId);
+
+        // Find latest session without clock_out_time
+        $target = null;
+        foreach (array_reverse($today) as $att) {
+            if (empty($att['check_out_time'])) {
+                $target = $att;
+                break;
+            }
+        }
+
+        if (!$target) {
+            throw new \RuntimeException('No active clock-in found for today, or you have already clocked out');
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $updated = $this->attendanceModel->updateClockOut((int) $target['id'], $now);
+
+        if (!$updated) {
+            throw new \RuntimeException('Failed to record clock-out');
+        }
+
+        $this->logModel->create([
+            'attendance_id' => (int) $target['id'],
+            'user_id' => $userId,
+            'session' => (int) $target['session'],
+            'message' => "Success: Clock out session {$target['session']} at $now",
+        ]);
+
+        return ['attendance_id' => (int) $target['id'], 'clock_out_time' => $now];
+    }
+
+    public function getMyToday(int $userId, ?string $date = null): array
+    {
+        $date = $date ?? date('Y-m-d');
+        $result = $this->attendanceModel->getByUserId($userId, ['date' => $date]);
+
+        return array_map(function (array $row) {
+            unset($row['face_image'], $row['latitude'], $row['longitude'], $row['distance_to_office']);
+            return $row;
+        }, $result['data'] ?? []);
     }
 
     public function getHistory(int $userId, string $role, array $filters = [], ?string $view = null): array
@@ -103,11 +150,11 @@ class AttendanceService
             }
 
             $this->attendanceModel->create([
-                'user_id'           => $userId,
+                'user_id' => $userId,
                 'shift_schedule_id' => $schedule['id'],
-                'session'           => $s,
-                'status'            => 'invalid',
-                'check_in_time'     => date('Y-m-d H:i:s'),
+                'session' => $s,
+                'status' => 'invalid',
+                'check_in_time' => date('Y-m-d H:i:s'),
             ]);
 
             $this->logModel->create([
@@ -200,7 +247,7 @@ class AttendanceService
     {
         $roleMap = [
             'manager' => ['hrd_manager', 'technical_manager'],
-            'staff'   => ['team_leader', 'staff']
+            'staff' => ['team_leader', 'staff']
         ];
 
         $roles = $roleMap[$category] ?? [];
@@ -226,29 +273,29 @@ class AttendanceService
             [$year, $mon] = explode('-', $month);
         } else {
             $year = (int) date('Y');
-            $mon  = (int) date('m');
+            $mon = (int) date('m');
         }
 
         $rows = $this->attendanceModel->getMonthlySummary((int) $year, (int) $mon);
 
         return array_map(function (array $row) {
             $workingDays = (int) $row['total_working_days'];
-            $valid       = (int) $row['total_valid'];
-            $late        = (int) $row['total_late'];
-            $leave       = (int) $row['total_leave'];
-            $invalid     = max(0, $workingDays - $valid - $late - $leave);
-            $rate        = $workingDays > 0 ? round(($valid / $workingDays) * 100, 2) : 0;
+            $valid = (int) $row['total_valid'];
+            $late = (int) $row['total_late'];
+            $leave = (int) $row['total_leave'];
+            $invalid = max(0, $workingDays - $valid - $late - $leave);
+            $rate = $workingDays > 0 ? round(($valid / $workingDays) * 100, 2) : 0;
 
             return [
-                'user_id'            => (int) $row['user_id'],
-                'user_name'          => $row['user_name'],
-                'team_name'          => $row['team_name'],
+                'user_id' => (int) $row['user_id'],
+                'user_name' => $row['user_name'],
+                'team_name' => $row['team_name'],
                 'total_working_days' => $workingDays,
-                'total_valid'        => $valid,
-                'total_late'         => $late,
-                'total_invalid'      => $invalid,
-                'total_leave'        => $leave,
-                'rate'               => $rate,
+                'total_valid' => $valid,
+                'total_late' => $late,
+                'total_invalid' => $invalid,
+                'total_leave' => $leave,
+                'rate' => $rate,
             ];
         }, $rows);
     }

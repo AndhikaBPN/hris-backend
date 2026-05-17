@@ -185,6 +185,18 @@ class Attendance
         return $res['data'] ?? [];
     }
 
+    public function updateClockOut(int $attendanceId, string $clockOutTime): bool
+    {
+        $stmt = $this->db->prepare("
+            UPDATE attendance
+            SET check_out_time = :clock_out_time
+            WHERE id = :id
+            AND DATE(check_in_time) = CURDATE()
+            AND check_out_time IS NULL
+        ");
+        return $stmt->execute(['clock_out_time' => $clockOutTime, 'id' => $attendanceId]);
+    }
+
     /**
      * Get today's attendance list filtered by internal categories (manager vs staff).
      *

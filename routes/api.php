@@ -52,7 +52,9 @@ return [
     // ----------------------------------------------------------------
     // Attendance
     // ----------------------------------------------------------------
-    ['POST', '/api/attendance', 'AttendanceController', 'store', ['hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['POST', '/api/attendance/clock-in', 'AttendanceController', 'store', ['hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['POST', '/api/attendance/clock-out', 'AttendanceController', 'clockOut', ['hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/attendance/my', 'AttendanceController', 'my', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/attendance', 'AttendanceController', 'index', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/attendance/today', 'AttendanceController', 'today', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/attendance/subordinates/today', 'AttendanceController', 'subordinatesToday', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader']],
