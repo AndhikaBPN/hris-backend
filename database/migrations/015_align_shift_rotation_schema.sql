@@ -1,24 +1,9 @@
 -- =========================================================
 -- MIGRATION 015: ALIGN SHIFT ROTATION SCHEMA
 -- Target desain:
---   user_shift_configs : user_id (PK), shift_start_date, shift_start_index
 --   shifts             : id, name, start_time, end_time
 --   shift_schedules    : id, user_id, date, shift_id, is_day_off, created_by
 -- =========================================================
-
-CREATE TABLE IF NOT EXISTS user_shift_configs (
-    user_id           INT PRIMARY KEY,
-    shift_start_date  DATE NOT NULL,
-    shift_start_index TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_shift_config_user
-        FOREIGN KEY (user_id) REFERENCES users(id)
-        ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_shift_configs_date
-    ON user_shift_configs(shift_start_date);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_shifts_name
     ON shifts(name);
