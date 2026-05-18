@@ -77,8 +77,6 @@ return [
     ['POST', '/api/shifts/setup', 'ShiftController', 'setup', ['hrd_manager']],
     ['POST', '/api/shifts/generate', 'ShiftController', 'generate', ['hrd_manager']],
     ['POST', '/api/shifts/override', 'ShiftController', 'override', ['hrd_manager']],
-    ['POST', '/api/users/{id}/shift-config', 'ShiftConfigController', 'store', ['c_level', 'hrd_manager']],
-    ['GET', '/api/users/{id}/shift-config', 'ShiftConfigController', 'show', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
 
     // ----------------------------------------------------------------
     // Dashboard
