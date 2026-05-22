@@ -19,6 +19,7 @@ class AttendanceController
         $faceImage = $body['face_image'] ?? '';
         $latitude = (float) ($body['latitude'] ?? 0);
         $longitude = (float) ($body['longitude'] ?? 0);
+        $distanceToOffice = (float) ($body['distance_to_office'] ?? null);
 
         if (!in_array($session, [1, 2], true)) {
             ResponseHelper::error('Session must be 1 or 2', 422);
@@ -31,7 +32,8 @@ class AttendanceController
                 $session,
                 $faceImage,
                 $latitude,
-                $longitude
+                $longitude,
+                $distanceToOffice
             );
             ResponseHelper::success($result, 'Attendance recorded successfully', 201);
         } catch (\RuntimeException $e) {
