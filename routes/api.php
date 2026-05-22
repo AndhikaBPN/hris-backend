@@ -102,4 +102,14 @@ return [
     // ----------------------------------------------------------------
     ['GET', '/api/face-embeddings', 'FaceEmbeddingController', 'show', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['POST', '/api/face-embeddings', 'FaceEmbeddingController', 'store', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+
+    // ----------------------------------------------------------------
+    // Office Location
+    // ----------------------------------------------------------------
+    ['GET', '/api/office-locations', 'OfficeLocationController', 'index', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/office-locations/{id}', 'OfficeLocationController', 'show', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['POST', '/api/office-locations', 'OfficeLocationController', 'store', ['c_level', 'hrd_manager']],
+    ['PUT', '/api/office-locations/{id}', 'OfficeLocationController', 'update', ['c_level', 'hrd_manager']],
+    ['DELETE', '/api/office-locations/{id}', 'OfficeLocationController', 'destroy', ['c_level', 'hrd_manager']],
+
 ];
