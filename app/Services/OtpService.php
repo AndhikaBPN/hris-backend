@@ -3,12 +3,10 @@
 class OtpService
 {
     private Otp $otpModel;
-    private User $userModel;
 
     public function __construct(PDO $db)
     {
         $this->otpModel = new Otp($db);
-        $this->userModel = new User($db);
     }
 
     /**
@@ -29,6 +27,20 @@ class OtpService
 
         // Kirim via MailHelper
         return MailHelper::sendOtp($email, $otpCode);
+    }
+
+    /**
+     * Send welcome email with OTP for new users to set their password.
+     * Email failure is non-fatal — user is already created.
+     */
+    public function sendWelcomeOtp(string $email, string $name): void
+    {
+        $otpCode = sprintf('%06d', random_int(0, 999999));
+        $expiry  = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+
+        $this->otpModel->create($email, $otpCode, $expiry, 'reset_password');
+
+        MailHelper::sendWelcomeWithOtp($email, $name, $otpCode);
     }
 
     /**

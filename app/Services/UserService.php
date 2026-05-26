@@ -3,10 +3,12 @@
 class UserService
 {
     private User $userModel;
+    private OtpService $otpService;
 
     public function __construct(PDO $db)
     {
-        $this->userModel = new User($db);
+        $this->userModel  = new User($db);
+        $this->otpService = new OtpService($db);
     }
 
     /** Ambil detail user berdasarkan ID. */
@@ -64,6 +66,8 @@ class UserService
         if (!$id) {
             throw new \RuntimeException('Failed to create user');
         }
+
+        $this->otpService->sendWelcomeOtp($data['email'], $data['name'] ?? '');
 
         return $id;
     }
