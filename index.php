@@ -40,6 +40,48 @@ require_once __DIR__ . '/bootstrap.php';
 // Router
 // ----------------------------------------------------------------
 $method = $_SERVER['REQUEST_METHOD'];
+
+// Method spoofing: POST + _method field → override method (untuk file upload via PUT/PATCH)
+if ($method === 'POST' && !empty($_POST['_method'])) {
+    $method = strtoupper($_POST['_method']);
+}
+
+// PHP hanya auto-populate $_POST/$_FILES untuk POST.
+// Untuk PUT/PATCH dengan multipart/form-data, parse manual dari php://input.
+if (in_array($method, ['PUT', 'PATCH'], true)) {
+    $ct = $_SERVER['CONTENT_TYPE'] ?? '';
+    if (str_contains($ct, 'multipart/form-data') && preg_match('/boundary=(.+)$/i', $ct, $bm)) {
+        $boundary = trim($bm[1]);
+        $raw = file_get_contents('php://input');
+        foreach (explode("--{$boundary}", $raw) as $part) {
+            $part = ltrim($part, "\r\n");
+            if ($part === '' || str_starts_with($part, '--')) continue;
+            if (!str_contains($part, "\r\n\r\n")) continue;
+            [$headers, $body] = explode("\r\n\r\n", $part, 2);
+            $body = rtrim($body, "\r\n");
+            if (!preg_match('/;\s*name="([^"]+)"/i', $headers, $nm)) continue;
+            $name = $nm[1];
+            if (preg_match('/filename="([^"]+)"/i', $headers, $fm)) {
+                $mime = 'application/octet-stream';
+                if (preg_match('/Content-Type:\s*([^\r\n]+)/i', $headers, $cm)) {
+                    $mime = trim($cm[1]);
+                }
+                $tmp = tempnam(sys_get_temp_dir(), 'php_put_');
+                file_put_contents($tmp, $body);
+                $_FILES[$name] = [
+                    'name'     => $fm[1],
+                    'type'     => $mime,
+                    'tmp_name' => $tmp,
+                    'error'    => UPLOAD_ERR_OK,
+                    'size'     => strlen($body),
+                ];
+            } else {
+                $_POST[$name] = $body;
+            }
+        }
+    }
+}
+
 $uriRaw = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = rtrim($uriRaw, '/');
 $routes = require __DIR__ . '/routes/api.php';

@@ -54,7 +54,8 @@ class UserController
     public function store(): void
     {
         try {
-            $id = $this->service->create($this->json());
+            $data = $this->formData();
+            $id = $this->service->create($data, $_FILES['photo_profile'] ?? null);
             ResponseHelper::success(['id' => $id], 'User created successfully', 201);
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
@@ -67,7 +68,8 @@ class UserController
     public function update(int $id): void
     {
         try {
-            $this->service->update($id, $this->json());
+            $data = $this->formData();
+            $this->service->update($id, $data, $_FILES['photo_profile'] ?? null);
             ResponseHelper::success(null, 'User updated successfully');
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
@@ -90,5 +92,16 @@ class UserController
     private function json(): array
     {
         return json_decode(file_get_contents('php://input'), true) ?? [];
+    }
+
+    private function formData(): array
+    {
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        if (str_contains($contentType, 'multipart/form-data')) {
+            $data = $_POST ?? [];
+            unset($data['_method']);
+            return $data;
+        }
+        return $this->json();
     }
 }

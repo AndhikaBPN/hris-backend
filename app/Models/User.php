@@ -30,12 +30,13 @@ class User
         }
         unset($data['role']);
 
-        $sql = "INSERT INTO users (name, birth_date, email, password, role_id, is_active, manager_id, team_id)
-                VALUES (:name, :birth_date, :email, :password, :role_id, :is_active, :manager_id, :team_id)";
+        $sql = "INSERT INTO users (name, birth_date, photo_profile, email, password, role_id, is_active, manager_id, team_id)
+                VALUES (:name, :birth_date, :photo_profile, :email, :password, :role_id, :is_active, :manager_id, :team_id)";
         $stmt = $this->db->prepare($sql);
         $success = $stmt->execute([
             'name' => $data['name'],
             'birth_date' => $data['birth_date'] ?? null,
+            'photo_profile' => $data['photo_profile'] ?? null,
             'email' => $data['email'],
             'password' => $data['password'],
             'role_id' => $data['role_id'],
@@ -89,7 +90,7 @@ class User
 
     public function all(array $filters = []): array
     {
-        $sql = "FROM users u LEFT JOIN `role` r ON u.role_id = r.id WHERE 1=1";
+        $sql = "FROM users u LEFT JOIN `role` r ON u.role_id = r.id LEFT JOIN users m ON u.manager_id = m.id LEFT JOIN `team` t ON u.team_id = t.id WHERE 1=1";
         $params = [];
 
         if (isset($filters['role'])) {
@@ -105,6 +106,11 @@ class User
         if (isset($filters['team_id'])) {
             $sql .= " AND u.team_id = :team_id";
             $params['team_id'] = $filters['team_id'];
+        }
+
+        if (isset($filters['name'])) {
+            $sql .= " AND u.name = :name";
+            $params['name'] = $filters['name'];
         }
 
         // Filter default: hanya yang aktif (1) jika tidak ditentukan lain
@@ -155,10 +161,12 @@ class User
 
     public function getBirthdays(int $month): array
     {
-        $sql = $this->baseSelectColumns() . " FROM users u 
-                LEFT JOIN `role` r ON u.role_id = r.id 
-                WHERE MONTH(u.birth_date) = :month 
-                AND u.is_active = 1 
+        $sql = $this->baseSelectColumns() . " FROM users u
+                LEFT JOIN `role` r ON u.role_id = r.id
+                LEFT JOIN users m ON u.manager_id = m.id
+                LEFT JOIN `team` t ON u.team_id = t.id
+                WHERE MONTH(u.birth_date) = :month
+                AND u.is_active = 1
                 ORDER BY DAY(u.birth_date) ASC";
 
         $stmt = $this->db->prepare($sql);
@@ -168,12 +176,12 @@ class User
 
     private function baseSelect(): string
     {
-        return $this->baseSelectColumns() . " FROM users u LEFT JOIN `role` r ON u.role_id = r.id";
+        return $this->baseSelectColumns() . " FROM users u LEFT JOIN `role` r ON u.role_id = r.id LEFT JOIN users m ON u.manager_id = m.id LEFT JOIN `team` t ON u.team_id = t.id";
     }
 
     private function baseSelectColumns(): string
     {
-        return "SELECT u.id, u.name, u.email, u.birth_date, u.password, u.role_id, r.role, u.is_active, u.manager_id, u.team_id, u.created_at, u.updated_at";
+        return "SELECT u.id, u.name, u.email, u.birth_date, u.photo_profile, u.password, u.role_id, r.role, u.is_active, u.manager_id, m.name AS manager_name, u.team_id, t.team_name, u.created_at, u.updated_at";
     }
 
     private function findRoleId(string $role): ?int

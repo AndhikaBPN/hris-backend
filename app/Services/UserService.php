@@ -7,7 +7,7 @@ class UserService
 
     public function __construct(PDO $db)
     {
-        $this->userModel  = new User($db);
+        $this->userModel = new User($db);
         $this->otpService = new OtpService($db);
     }
 
@@ -30,7 +30,9 @@ class UserService
 
         // Clean out password hash from response data array
         $result['data'] = array_map(function ($user) {
-            unset($user['password']);
+            unset($user['password'], $user['photo_profile'], $user['role_id'],
+                  $user['manager_id'], $user['manager_name'], $user['team_id'],
+                  $user['team_name'], $user['created_at'], $user['updated_at']);
             return $user;
         }, $result['data']);
 
@@ -50,7 +52,7 @@ class UserService
     }
 
     /** Buat user baru. Hash password sebelum simpan. */
-    public function create(array $data): int
+    public function create(array $data, ?array $photoFile = null): int
     {
         if (empty($data['email']) || empty($data['password']) || (empty($data['role_id']))) {
             throw new \InvalidArgumentException('Incomplete data (email, password, role)');
@@ -61,6 +63,10 @@ class UserService
         }
 
         $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
+
+        if ($photoFile && $photoFile['error'] === UPLOAD_ERR_OK) {
+            $data['photo_profile'] = $this->savePhoto($photoFile);
+        }
 
         $id = $this->userModel->create($data);
         if (!$id) {
@@ -73,17 +79,50 @@ class UserService
     }
 
     /** Update data user (tanpa password). */
-    public function update(int $id, array $data): bool
+    public function update(int $id, array $data, ?array $photoFile = null): bool
     {
         $user = $this->userModel->findById($id);
         if (!$user) {
             throw new \InvalidArgumentException('User not found');
         }
 
-        // Buang password jika tidak sengaja terkirim di body
         unset($data['password']);
 
-        return $this->userModel->update($id, $data);
+        if ($photoFile && $photoFile['error'] === UPLOAD_ERR_OK) {
+            if (!empty($user['photo_profile']) && file_exists($user['photo_profile'])) {
+                unlink($user['photo_profile']);
+            }
+            $data['photo_profile'] = $this->savePhoto($photoFile);
+        }
+
+        $ok = $this->userModel->update($id, $data);
+        if (!$ok) {
+            throw new \RuntimeException('Failed to update user');
+            // throw new ErrorException($ok);
+        }
+        return true;
+    }
+
+    private function savePhoto(array $file): string
+    {
+        $allowed = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!in_array($file['type'], $allowed, true)) {
+            throw new \InvalidArgumentException('Photo must be JPEG, PNG, or WebP');
+        }
+
+        if ($file['size'] > 10 * 1024 * 1024) {
+            throw new \InvalidArgumentException('Photo size must not exceed 10MB');
+        }
+
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = uniqid('photo_', true) . '.' . $ext;
+        $dest = __DIR__ . '/../../storage/profiles/' . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $dest) && !rename($file['tmp_name'], $dest)) {
+            throw new \RuntimeException('Failed to save photo');
+        }
+
+        return 'storage/profiles/' . $filename;
     }
 
     /** Soft delete (nonaktifkan) user. */
