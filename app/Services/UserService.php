@@ -30,9 +30,16 @@ class UserService
 
         // Clean out password hash from response data array
         $result['data'] = array_map(function ($user) {
-            unset($user['password'], $user['photo_profile'], $user['role_id'],
-                  $user['manager_id'], $user['manager_name'], $user['team_id'],
-                  $user['team_name'], $user['created_at'], $user['updated_at']);
+            unset(
+                $user['password'],
+                $user['photo_profile'],
+                $user['role_id'],
+                $user['manager_id'],
+                $user['manager_name'],
+                $user['team_id'],
+                $user['team_name'],
+                $user['birth_date']
+            );
             return $user;
         }, $result['data']);
 
