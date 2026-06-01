@@ -309,34 +309,48 @@ class ShiftScheduleService
             'oktober' => 10, 'desember' => 12,
         ];
 
+        $y2k = fn(int $y): int => $y < 100 ? 2000 + $y : $y;
         $currentYear = (int) date('Y');
 
-        // YYYY-MM
+        // YYYY-MM  e.g. 2025-07
         if (preg_match('/^(\d{4})-(\d{1,2})$/', $monthRaw, $m)) {
             return ['year' => (int) $m[1], 'month' => (int) $m[2]];
         }
 
-        // MM/YYYY or MM-YYYY
+        // MM/YYYY or MM-YYYY  e.g. 07/2025, 07-2025
         if (preg_match('/^(\d{1,2})[\/\-](\d{4})$/', $monthRaw, $m)) {
             return ['year' => (int) $m[2], 'month' => (int) $m[1]];
         }
 
-        // "Jan 2025" or "January 2025"
-        if (preg_match('/^([a-zA-Z]+)\s+(\d{4})$/', $monthRaw, $m)) {
+        // MM-YY  e.g. 07-25
+        if (preg_match('/^(\d{1,2})-(\d{2})$/', $monthRaw, $m)) {
+            return ['year' => $y2k((int) $m[2]), 'month' => (int) $m[1]];
+        }
+
+        // "MonName YYYY" or "MonName YY"  e.g. Jul 2025, Jul 25, July 2025, July 25
+        if (preg_match('/^([a-zA-Z]+)\s+(\d{2,4})$/', $monthRaw, $m)) {
             $key = strtolower($m[1]);
             if (isset($monthNames[$key])) {
-                return ['year' => (int) $m[2], 'month' => $monthNames[$key]];
+                return ['year' => $y2k((int) $m[2]), 'month' => $monthNames[$key]];
             }
         }
 
-        // "Jan" or "January" (current year)
+        // "MonName-YY"  e.g. Jul-25, July-25
+        if (preg_match('/^([a-zA-Z]+)-(\d{2,4})$/', $monthRaw, $m)) {
+            $key = strtolower($m[1]);
+            if (isset($monthNames[$key])) {
+                return ['year' => $y2k((int) $m[2]), 'month' => $monthNames[$key]];
+            }
+        }
+
+        // "MonName" only (current year)
         $key = strtolower($monthRaw);
         if (isset($monthNames[$key])) {
             return ['year' => $currentYear, 'month' => $monthNames[$key]];
         }
 
         throw new \InvalidArgumentException(
-            "Cannot parse month from '{$monthRaw}'. Use format: 'Jul 2025', 'July 2025', '2025-07', or 'Jul'"
+            "Cannot parse month from '{$monthRaw}'. Accepted: 'Jul 2025', 'Jul 25', 'Jul-25', '07-2025', '07-25', 'July 2025', 'July 25'"
         );
     }
 
