@@ -50,6 +50,23 @@ test.php
 debug.php
 
 # =========================
+# NODE / NPM
+# =========================
+node_modules/
+package-lock.json
+
+# =========================
+# SKILLS / PLUGINS
+# =========================
+skills-lock.json
+
+# =========================
+# STORAGE UPLOADS
+# =========================
+storage/profiles/
+storage/faces/
+
+# =========================
 # OS / MISC
 # =========================
 *.bak
