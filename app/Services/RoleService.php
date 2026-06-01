@@ -69,6 +69,10 @@ class RoleService
             throw new \InvalidArgumentException('Role not found');
         }
 
+        if ($this->roleModel->isUsedByUsers($id)) {
+            throw new \InvalidArgumentException('Role cannot be deleted because it is still assigned to one or more users');
+        }
+
         return $this->roleModel->delete($id);
     }
 

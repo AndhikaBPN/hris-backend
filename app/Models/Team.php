@@ -100,6 +100,13 @@ class Team
         ]);
     }
 
+    public function isUsedByUsers(int $id): bool
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM users WHERE team_id = :id LIMIT 1");
+        $stmt->execute(['id' => $id]);
+        return (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'] > 0;
+    }
+
     public function delete(int $id): bool
     {
         $stmt = $this->db->prepare("DELETE FROM team WHERE id = :id");

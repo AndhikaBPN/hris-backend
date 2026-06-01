@@ -34,6 +34,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+// Serve static files from storage/ directly (e.g. profile photos)
+$staticPath = __DIR__ . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+if (is_file($staticPath) && str_starts_with(realpath($staticPath), realpath(__DIR__ . '/storage'))) {
+    $mime = mime_content_type($staticPath) ?: 'application/octet-stream';
+    header('Content-Type: ' . $mime);
+    readfile($staticPath);
+    exit;
+}
+
 require_once __DIR__ . '/bootstrap.php';
 
 // ----------------------------------------------------------------

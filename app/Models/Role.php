@@ -78,6 +78,13 @@ class Role
         ]);
     }
 
+    public function isUsedByUsers(int $id): bool
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM users WHERE role_id = :id LIMIT 1");
+        $stmt->execute(['id' => $id]);
+        return (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'] > 0;
+    }
+
     public function delete(int $id): bool
     {
         $stmt = $this->db->prepare("DELETE FROM `role` WHERE id = :id");

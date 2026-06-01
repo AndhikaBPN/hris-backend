@@ -219,6 +219,10 @@ class TeamService
             throw new \InvalidArgumentException('Team not found');
         }
 
+        if ($this->teamModel->isUsedByUsers($id)) {
+            throw new \InvalidArgumentException('Team cannot be deleted because it is still assigned to one or more users');
+        }
+
         return $this->teamModel->delete($id);
     }
 

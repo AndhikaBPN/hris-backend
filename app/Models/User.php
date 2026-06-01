@@ -138,11 +138,15 @@ class User
         $sortCol = $filters['order_by'] ?? 'u.id';
         $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
 
-        // Whitelist columns to prevent SQL Injection
-        $allowedCols = ['u.id', 'u.name', 'u.email', 'r.role', 'u.created_at'];
-        if (!in_array($sortCol, $allowedCols)) {
-            $sortCol = 'u.id';
-        }
+        // Map simple names to qualified columns to prevent SQL Injection
+        $colMap = [
+            'id'         => 'u.id',
+            'name'       => 'u.name',
+            'email'      => 'u.email',
+            'role'       => 'r.role',
+            'created_at' => 'u.created_at',
+        ];
+        $sortCol = $colMap[$sortCol] ?? $colMap[$filters['order_by'] ?? ''] ?? 'u.id';
         if (!in_array($sortDir, ['ASC', 'DESC'])) {
             $sortDir = 'DESC';
         }
