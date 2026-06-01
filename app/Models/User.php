@@ -30,19 +30,23 @@ class User
         }
         unset($data['role']);
 
-        $sql = "INSERT INTO users (name, birth_date, photo_profile, email, password, role_id, is_active, manager_id, team_id)
-                VALUES (:name, :birth_date, :photo_profile, :email, :password, :role_id, :is_active, :manager_id, :team_id)";
+        $sql = "INSERT INTO users (name, birth_date, photo_profile, gender, phone, address, religion, email, password, role_id, is_active, manager_id, team_id)
+                VALUES (:name, :birth_date, :photo_profile, :gender, :phone, :address, :religion, :email, :password, :role_id, :is_active, :manager_id, :team_id)";
         $stmt = $this->db->prepare($sql);
         $success = $stmt->execute([
-            'name' => $data['name'],
-            'birth_date' => $data['birth_date'] ?? null,
+            'name'          => $data['name'],
+            'birth_date'    => $data['birth_date'] ?? null,
             'photo_profile' => $data['photo_profile'] ?? null,
-            'email' => $data['email'],
-            'password' => $data['password'],
-            'role_id' => $data['role_id'],
-            'is_active' => $data['is_active'] ?? 1,
-            'manager_id' => $data['manager_id'] ?? null,
-            'team_id' => $data['team_id'] ?? null,
+            'gender'        => $data['gender'],
+            'phone'         => $data['phone'],
+            'address'       => $data['address'],
+            'religion'      => $data['religion'] ?? null,
+            'email'         => $data['email'],
+            'password'      => $data['password'],
+            'role_id'       => $data['role_id'],
+            'is_active'     => $data['is_active'] ?? 1,
+            'manager_id'    => $data['manager_id'] ?? null,
+            'team_id'       => $data['team_id'] ?? null,
         ]);
 
         return $success ? (int) $this->db->lastInsertId() : false;
@@ -181,7 +185,7 @@ class User
 
     private function baseSelectColumns(): string
     {
-        return "SELECT u.id, u.name, u.email, u.birth_date, u.photo_profile, u.password, u.role_id, r.role, u.is_active, u.manager_id, m.name AS manager_name, u.team_id, t.team_name, u.created_at, u.updated_at";
+        return "SELECT u.id, u.name, u.email, u.birth_date, u.photo_profile, u.gender, u.phone, u.address, u.religion, u.password, u.role_id, r.role, u.is_active, u.manager_id, m.name AS manager_name, u.team_id, t.team_name, u.created_at, u.updated_at";
     }
 
     private function findRoleId(string $role): ?int

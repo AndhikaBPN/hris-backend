@@ -61,8 +61,22 @@ class UserService
     /** Buat user baru. Hash password sebelum simpan. */
     public function create(array $data, ?array $photoFile = null): int
     {
-        if (empty($data['email']) || empty($data['password']) || (empty($data['role_id']))) {
+        if (empty($data['email']) || empty($data['password']) || empty($data['role_id'])) {
             throw new \InvalidArgumentException('Incomplete data (email, password, role)');
+        }
+
+        if (empty($data['gender']) || empty($data['phone']) || empty($data['address'])) {
+            throw new \InvalidArgumentException('Incomplete data (gender, phone, address)');
+        }
+
+        $validGenders = ['male', 'female'];
+        if (!in_array($data['gender'], $validGenders, true)) {
+            throw new \InvalidArgumentException('Gender must be male or female');
+        }
+
+        $validReligions = ['Islam', 'Kristen', 'Katolik', 'Buddha', 'Hindu', 'Konghucu'];
+        if (!empty($data['religion']) && !in_array($data['religion'], $validReligions, true)) {
+            throw new \InvalidArgumentException('Invalid religion value');
         }
 
         if ($this->userModel->findByEmail($data['email'])) {
@@ -94,6 +108,15 @@ class UserService
         }
 
         unset($data['password']);
+
+        if (isset($data['gender']) && !in_array($data['gender'], ['male', 'female'], true)) {
+            throw new \InvalidArgumentException('Gender must be male or female');
+        }
+
+        $validReligions = ['Islam', 'Kristen', 'Katolik', 'Buddha', 'Hindu', 'Konghucu'];
+        if (!empty($data['religion']) && !in_array($data['religion'], $validReligions, true)) {
+            throw new \InvalidArgumentException('Invalid religion value');
+        }
 
         if ($photoFile && $photoFile['error'] === UPLOAD_ERR_OK) {
             if (!empty($user['photo_profile']) && file_exists($user['photo_profile'])) {
