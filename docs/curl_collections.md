@@ -90,69 +90,326 @@ curl -X GET http://localhost:8000/api/attendance \
 
 ---
 
-## 4. Shift & Rotation
-### Lihat Jadwal Shift (Diri Sendiri / Staff)
+## 4. Shift Management
+
+> Roles yang bisa baca: semua role (all authenticated).
+> Roles yang bisa create/update/delete/import: `c_level`, `hrd_manager`.
+
+### List Semua Shift (dengan pagination & search)
+
 ```bash
-curl -X GET http://localhost:8000/api/shifts \
+curl -X GET "http://localhost:8000/api/shifts" \
      -H "Authorization: Bearer <your_jwt_token>"
 ```
 
-### Lihat Detail Konfigurasi Rotasi User (HRD)
 ```bash
-curl -X GET http://localhost:8000/api/users/{id}/shift-config \
+# Dengan query params opsional
+curl -X GET "http://localhost:8000/api/shifts?search=morning&page=1&limit=10&order_by=name&sorting=ASC" \
      -H "Authorization: Bearer <your_jwt_token>"
 ```
 
-### Setup / Update Konfigurasi Rotasi Shift User Tunggal (HRD)
+### Lihat Detail Shift
+
 ```bash
-curl -X POST http://localhost:8000/api/users/{id}/shift-config \
+curl -X GET http://localhost:8000/api/shifts/1 \
+     -H "Authorization: Bearer <your_jwt_token>"
+```
+
+### Tambah Shift Baru (HRD / C-Level)
+
+```bash
+curl -X POST http://localhost:8000/api/shifts \
      -H "Authorization: Bearer <your_jwt_token>" \
      -H "Content-Type: application/json" \
      -d '{
-           "shift_start_date": "2025-01-01",
-           "shift_start_index": 0
+           "name": "Morning",
+           "start_time": "06:00",
+           "end_time": "14:00",
+           "is_overnight": 0
          }'
 ```
 
-### Setup Konfigurasi Rotasi Batch Massal (HRD)
+> `is_overnight`: `1` jika shift melewati tengah malam (misal 22:00–06:00), `0` jika tidak.
+
+### Update Shift (HRD / C-Level)
+
 ```bash
-curl -X POST http://localhost:8000/api/shifts/setup \
+curl -X PUT http://localhost:8000/api/shifts/1 \
      -H "Authorization: Bearer <your_jwt_token>" \
      -H "Content-Type: application/json" \
      -d '{
-           "start_date": "2025-01-01",
-           "users": [
-              {"user_id": 2, "start_index": 0},
-              {"user_id": 3, "start_index": 2}
-           ]
+           "name": "Morning Revised",
+           "start_time": "07:00",
+           "end_time": "15:00",
+           "is_overnight": 0
          }'
 ```
 
-### Generate Real Jadwal Shift / Polling Harian (HRD / System Cron)
+### Hapus Shift (HRD / C-Level)
+
 ```bash
-curl -X POST http://localhost:8000/api/shifts/generate \
-     -H "Authorization: Bearer <your_jwt_token>" \
-     -H "Content-Type: application/json" \
-     -d '{"start_date": "2025-01-01", "days": 30}'
+curl -X DELETE http://localhost:8000/api/shifts/1 \
+     -H "Authorization: Bearer <your_jwt_token>"
 ```
 
-### Override Jadwal Shift Manual (HRD)
+> Shift tidak bisa dihapus jika masih digunakan di `shift_schedules`. Akan mengembalikan HTTP 409.
+
+### Import Shift dari Excel (HRD / C-Level)
+
 ```bash
-curl -X POST http://localhost:8000/api/shifts/override \
+curl -X POST http://localhost:8000/api/shifts/import \
+     -H "Authorization: Bearer <your_jwt_token>" \
+     -F "file=@/path/to/shifts.xlsx"
+```
+
+**Format file Excel / CSV:**
+
+| Kolom A (name) | Kolom B (start_time) | Kolom C (end_time) | Kolom D (is_overnight) |
+| -------------- | -------------------- | ------------------ | ---------------------- |
+| Morning        | 06:00                | 14:00              | 0                      |
+| Afternoon      | 14:00                | 22:00              | 0                      |
+| Night          | 22:00                | 06:00              | 1                      |
+
+- Baris pertama dianggap header dan dilewati.
+- Baris dengan nama shift yang sudah ada akan dilewati (`skipped`).
+- Format waktu: `HH:MM` atau `HH:MM:SS`. Sel Excel bertipe Time otomatis dikonversi.
+- File yang diterima: `.xlsx`, `.xls`, `.csv`.
+
+**Contoh response sukses:**
+```json
+{
+  "success": true,
+  "message": "Import complete: 3 imported, 1 skipped",
+  "data": {
+    "imported": 3,
+    "skipped": 1,
+    "errors": [
+      "Row 3: name 'Morning' already exists (skipped)"
+    ]
+  }
+}
+
+---
+
+## 5. Shift Schedule (Jadwal Shift per User)
+
+> Roles baca jadwal sendiri: semua role.
+> Roles kelola jadwal semua user: `c_level`, `hrd_manager`.
+> Roles lihat jadwal semua user (read-only): `technical_manager`.
+
+### Lihat Jadwal Shift Sendiri (My Schedule)
+
+```bash
+# Semua jadwal bulan ini (default)
+curl -X GET "http://localhost:8000/api/shift-schedules/my" \
+     -H "Authorization: Bearer <your_jwt_token>"
+```
+
+```bash
+# Filter rentang tanggal
+curl -X GET "http://localhost:8000/api/shift-schedules/my?start_date=2025-06-01&end_date=2025-06-30&page=1&limit=31" \
+     -H "Authorization: Bearer <your_jwt_token>"
+```
+
+```bash
+# Filter tanggal spesifik
+curl -X GET "http://localhost:8000/api/shift-schedules/my?date=2025-06-15" \
+     -H "Authorization: Bearer <your_jwt_token>"
+```
+
+### List Semua Jadwal Shift (Admin)
+
+```bash
+curl -X GET "http://localhost:8000/api/shift-schedules" \
+     -H "Authorization: Bearer <your_jwt_token>"
+```
+
+```bash
+# Filter by nama user, team, rentang tanggal, day off
+curl -X GET "http://localhost:8000/api/shift-schedules?name=John&team=Backend&start_date=2025-06-01&end_date=2025-06-30&is_day_off=0&page=1&limit=20" \
+     -H "Authorization: Bearer <your_jwt_token>"
+```
+
+```bash
+# Filter single date
+curl -X GET "http://localhost:8000/api/shift-schedules?date=2025-06-15" \
+     -H "Authorization: Bearer <your_jwt_token>"
+```
+
+> Query params tersedia: `name` (partial), `team` (partial), `date`, `start_date`, `end_date`, `is_day_off`, `page`, `limit`, `order_by`, `sorting`.
+
+### Lihat Detail Jadwal Shift
+
+```bash
+curl -X GET http://localhost:8000/api/shift-schedules/1 \
+     -H "Authorization: Bearer <your_jwt_token>"
+```
+
+### Tambah Jadwal Shift — Single (HRD / C-Level)
+
+```bash
+curl -X POST http://localhost:8000/api/shift-schedules \
      -H "Authorization: Bearer <your_jwt_token>" \
      -H "Content-Type: application/json" \
      -d '{
-           "user_id": 2,
-           "date": "2025-01-10",
+           "user_id": 3,
+           "date": "2025-06-20",
            "shift_id": 1,
-           "is_day_off": false,
-           "notes": "Ganti shift karena staff A sakit"
+           "is_day_off": 0,
+           "notes": "Jadwal reguler"
          }'
+```
+
+```bash
+# Hari libur (shift_id tidak diperlukan)
+curl -X POST http://localhost:8000/api/shift-schedules \
+     -H "Authorization: Bearer <your_jwt_token>" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "user_id": 3,
+           "date": "2025-06-21",
+           "is_day_off": 1,
+           "notes": "Libur mingguan"
+         }'
+```
+
+> Jika `(user_id, date)` sudah ada, data lama di-overwrite (upsert).
+
+### Tambah Jadwal Shift — Bulk (Multi User × Multi Tanggal) (HRD / C-Level)
+
+```bash
+# Employee A & B shift pagi di tanggal 8 dan 9 Juni
+curl -X POST http://localhost:8000/api/shift-schedules/bulk \
+     -H "Authorization: Bearer <your_jwt_token>" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "user_ids": [3, 4],
+           "dates": ["2025-06-08", "2025-06-09"],
+           "shift_id": 1,
+           "is_day_off": 0,
+           "notes": "Jadwal reguler"
+         }'
+```
+
+```bash
+# Bulk libur (shift_id tidak diperlukan)
+curl -X POST http://localhost:8000/api/shift-schedules/bulk \
+     -H "Authorization: Bearer <your_jwt_token>" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "user_ids": [3, 4, 5],
+           "dates": ["2025-06-07", "2025-06-08"],
+           "is_day_off": 1
+         }'
+```
+
+**Contoh response bulk create:**
+
+```json
+{
+  "success": true,
+  "message": "Bulk create complete: 4 created",
+  "data": {
+    "created": 4,
+    "errors": []
+  }
+}
+```
+
+### Update Jadwal Shift — Single (HRD / C-Level)
+
+> Tidak bisa edit jadwal yang sudah lewat (date < hari ini). Akan mengembalikan HTTP 422.
+
+```bash
+curl -X PUT http://localhost:8000/api/shift-schedules/1 \
+     -H "Authorization: Bearer <your_jwt_token>" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "shift_id": 2,
+           "is_day_off": 0,
+           "notes": "Ganti ke shift siang"
+         }'
+```
+
+### Update Jadwal Shift — Bulk (Setiap Row Shift Berbeda) (HRD / C-Level)
+
+```bash
+curl -X PUT http://localhost:8000/api/shift-schedules/bulk \
+     -H "Authorization: Bearer <your_jwt_token>" \
+     -H "Content-Type: application/json" \
+     -d '[
+           {"id": 1, "shift_id": 1, "is_day_off": 0, "notes": "Shift pagi"},
+           {"id": 2, "shift_id": 2, "is_day_off": 0, "notes": "Shift siang"},
+           {"id": 3, "is_day_off": 1, "notes": "Libur"}
+         ]'
+```
+
+**Contoh response bulk update:**
+
+```json
+{
+  "success": true,
+  "message": "Bulk update complete: 2 updated",
+  "data": {
+    "updated": 2,
+    "errors": [
+      "id 3: Cannot edit a past shift schedule"
+    ]
+  }
+}
+```
+
+### Hapus Jadwal Shift (HRD / C-Level)
+
+```bash
+curl -X DELETE http://localhost:8000/api/shift-schedules/1 \
+     -H "Authorization: Bearer <your_jwt_token>"
+```
+
+### Import Jadwal Shift dari Excel (HRD / C-Level)
+
+```bash
+curl -X POST http://localhost:8000/api/shift-schedules/import \
+     -H "Authorization: Bearer <your_jwt_token>" \
+     -F "file=@/path/to/shift_schedules.xlsx"
+```
+
+**Format file Excel / CSV:**
+
+| Kolom A (user_id) | Kolom B (date)   | Kolom C (shift_id) | Kolom D (is_day_off) | Kolom E (notes)   |
+| ----------------- | ---------------- | ------------------ | -------------------- | ----------------- |
+| 3                 | 2025-06-20       | 1                  | 0                    | Shift pagi        |
+| 4                 | 2025-06-20       | 2                  | 0                    |                   |
+| 3                 | 2025-06-21       |                    | 1                    | Libur mingguan    |
+
+- Baris pertama dianggap header dan dilewati.
+- Kolom C (`shift_id`) boleh kosong jika `is_day_off = 1`.
+- Kolom D (`is_day_off`): `1` = libur, `0` = shift aktif.
+- Kolom E (`notes`) opsional.
+- Jika `(user_id, date)` sudah ada, data lama di-overwrite.
+- Sel tanggal bertipe Date di Excel otomatis dikonversi ke `YYYY-MM-DD`.
+- File yang diterima: `.xlsx`, `.xls`, `.csv`.
+
+**Contoh response sukses:**
+
+```json
+{
+  "success": true,
+  "message": "Import complete: 5 imported, 1 skipped",
+  "data": {
+    "imported": 5,
+    "skipped": 1,
+    "errors": [
+      "Row 4: User id 99 not found"
+    ]
+  }
+}
 ```
 
 ---
 
-## 5. Leave (Pengajuan Cuti)
+## 6. Leave (Pengajuan Cuti)
+
 ### Ajukan Cuti
 ```bash
 curl -X POST http://localhost:8000/api/leave \

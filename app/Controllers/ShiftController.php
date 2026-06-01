@@ -9,76 +9,32 @@ class ShiftController
         $this->service = new ShiftService($db);
     }
 
-    // GET /api/shifts (Dapatkan jadwal shift sendiri)
+    // GET /api/shifts
     public function index(): void
     {
-        $authUser = $GLOBALS['auth_user'];
-        $date     = $_GET['date'] ?? null;
-
-        if ($date !== null && $date !== '') {
-            try {
-                $shift = $this->service->getShiftFinal((int) $authUser['id'], $date);
-                ResponseHelper::success([
-                    'shift_name' => $shift['shift_name'],
-                    'start_time' => $shift['start_time'],
-                    'end_time'   => $shift['end_time'],
-                    'is_day_off' => $shift['is_day_off'],
-                ]);
-            } catch (\InvalidArgumentException $e) {
-                ResponseHelper::error($e->getMessage(), 422);
-            }
-            return;
-        }
-
-        $fromDate = $_GET['from_date'] ?? date('Y-m-01');
-        $toDate   = $_GET['to_date'] ?? date('Y-m-t');
-        $filters  = array_merge($_GET, [
-            'start_date' => $fromDate,
-            'end_date'   => $toDate
-        ]);
-
-        $result = $this->service->getSchedule((int) $authUser['id'], $filters);
-        ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
+        $result = $this->service->getAll($_GET);
+        ResponseHelper::success($result['data'], 'OK', 200, $result['meta']);
     }
 
-    // POST /api/shifts/generate (Generate jadwal rotasi otomatis - HRD only)
-    public function generate(): void
+    // GET /api/shifts/{id}
+    public function show(string $id): void
     {
-        $body = $this->json();
-        
-        if (empty($body['user_id']) || empty($body['role']) || empty($body['start_date'])) {
-            ResponseHelper::error('user_id, role, and start_date are required', 422);
-            return;
-        }
-
         try {
-            $this->service->generateSchedule(
-                (int) $body['user_id'],
-                $body['role'],
-                $body['start_date'],
-                (int) ($body['days'] ?? 30)
-            );
-            ResponseHelper::success(null, 'Shift schedule generated successfully', 201);
-        } catch (\RuntimeException $e) {
-            ResponseHelper::error($e->getMessage(), 400);
+            $shift = $this->service->getById((int) $id);
+            ResponseHelper::success($shift);
+        } catch (\InvalidArgumentException $e) {
+            ResponseHelper::error($e->getMessage(), 404);
         }
     }
 
-    // POST /api/shifts/setup (Setup awal rotasi shift - HRD only)
-    public function setup(): void
+    // POST /api/shifts
+    public function store(): void
     {
-        $body = $this->json();
-        $startDate = $body['start_date'] ?? '';
-        $users = $body['users'] ?? [];
-
-        if ($startDate === '' || !is_array($users)) {
-            ResponseHelper::error('start_date and users are required', 422);
-            return;
-        }
-
+        $data = $this->json();
         try {
-            $data = $this->service->setupInitialShifts($startDate, $users);
-            ResponseHelper::success($data, 'Initial shift setup saved successfully');
+            $id    = $this->service->create($data);
+            $shift = $this->service->getById($id);
+            ResponseHelper::success($shift, 'Shift created successfully', 201);
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
         } catch (\RuntimeException $e) {
@@ -86,27 +42,51 @@ class ShiftController
         }
     }
 
-    // POST /api/shifts/override (Override jadwal manual - HRD only)
-    public function override(): void
+    // PUT /api/shifts/{id}
+    public function update(string $id): void
     {
-        $body = $this->json();
+        $data = $this->json();
+        try {
+            $this->service->update((int) $id, $data);
+            $shift = $this->service->getById((int) $id);
+            ResponseHelper::success($shift, 'Shift updated successfully');
+        } catch (\InvalidArgumentException $e) {
+            ResponseHelper::error($e->getMessage(), 422);
+        } catch (\RuntimeException $e) {
+            ResponseHelper::error($e->getMessage(), 400);
+        }
+    }
 
-        if (empty($body['user_id']) || empty($body['date'])) {
-            ResponseHelper::error('user_id and date are required', 422);
+    // DELETE /api/shifts/{id}
+    public function destroy(string $id): void
+    {
+        try {
+            $this->service->delete((int) $id);
+            ResponseHelper::success(null, 'Shift deleted successfully');
+        } catch (\InvalidArgumentException $e) {
+            ResponseHelper::error($e->getMessage(), 404);
+        } catch (\RuntimeException $e) {
+            ResponseHelper::error($e->getMessage(), 409);
+        }
+    }
+
+    // POST /api/shifts/import
+    public function import(): void
+    {
+        $file = $_FILES['file'] ?? null;
+        if (!$file) {
+            ResponseHelper::error('File is required (multipart field: file)', 422);
             return;
         }
 
         try {
-            $authUser = $GLOBALS['auth_user'];
-            $this->service->overrideSchedule(
-                (int) $body['user_id'],
-                $body['date'],
-                isset($body['shift_id']) ? (int) $body['shift_id'] : null,
-                (bool) ($body['is_day_off'] ?? false),
-                $body['notes'] ?? '',
-                isset($authUser['id']) ? (int) $authUser['id'] : null
+            $result = $this->service->importFromExcel($file);
+            ResponseHelper::success(
+                $result,
+                "Import complete: {$result['imported']} imported, {$result['skipped']} skipped"
             );
-            ResponseHelper::success(null, 'Schedule overridden successfully');
+        } catch (\InvalidArgumentException $e) {
+            ResponseHelper::error($e->getMessage(), 422);
         } catch (\RuntimeException $e) {
             ResponseHelper::error($e->getMessage(), 400);
         }

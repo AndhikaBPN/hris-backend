@@ -23,6 +23,13 @@ class User
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function findByName(string $name): array|false
+    {
+        $stmt = $this->db->prepare($this->baseSelect() . " WHERE LOWER(u.name) = LOWER(:name) LIMIT 1");
+        $stmt->execute(['name' => $name]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     public function create(array $data): int|false
     {
         if (!isset($data['role_id']) && isset($data['role'])) {

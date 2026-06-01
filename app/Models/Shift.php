@@ -28,18 +28,20 @@ class Shift
         $sql = "FROM shifts WHERE 1=1";
         $params = [];
 
-        // Count total
+        if (!empty($filters['search'])) {
+            $sql .= " AND name LIKE :search";
+            $params['search'] = '%' . $filters['search'] . '%';
+        }
+
         $countStmt = $this->db->prepare("SELECT COUNT(id) as total " . $sql);
         $countStmt->execute($params);
         $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-        // Pagination
-        $page = isset($filters['page']) ? max(1, (int) $filters['page']) : 1;
-        $limit = isset($filters['limit']) ? max(1, (int) $filters['limit']) : 10;
+        $page   = isset($filters['page'])  ? max(1, (int) $filters['page'])  : 1;
+        $limit  = isset($filters['limit']) ? max(1, (int) $filters['limit']) : 10;
         $offset = ($page - 1) * $limit;
         $lastPage = ceil($total / $limit);
 
-        // Sorting
         $sortCol = $filters['order_by'] ?? 'id';
         $sortDir = strtoupper($filters['sorting'] ?? 'ASC');
         $allowedCols = ['id', 'name', 'start_time', 'end_time'];
@@ -56,8 +58,53 @@ class Shift
                 'current_page'  => $page,
                 'last_page'     => (int) $lastPage,
                 'per_page'      => $limit,
-                'total_records' => $total
+                'total_records' => $total,
             ]
         ];
+    }
+
+    public function create(array $data): int|false
+    {
+        $stmt = $this->db->prepare(
+            "INSERT INTO shifts (name, start_time, end_time, is_overnight)
+             VALUES (:name, :start_time, :end_time, :is_overnight)"
+        );
+        $success = $stmt->execute([
+            'name'        => $data['name'],
+            'start_time'  => $data['start_time'],
+            'end_time'    => $data['end_time'],
+            'is_overnight' => (int) ($data['is_overnight'] ?? 0),
+        ]);
+        return $success ? (int) $this->db->lastInsertId() : false;
+    }
+
+    public function update(int $id, array $data): bool
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE shifts SET name = :name, start_time = :start_time, end_time = :end_time, is_overnight = :is_overnight
+             WHERE id = :id"
+        );
+        return $stmt->execute([
+            'id'           => $id,
+            'name'         => $data['name'],
+            'start_time'   => $data['start_time'],
+            'end_time'     => $data['end_time'],
+            'is_overnight' => (int) ($data['is_overnight'] ?? 0),
+        ]);
+    }
+
+    public function delete(int $id): bool
+    {
+        $stmt = $this->db->prepare("DELETE FROM shifts WHERE id = :id");
+        return $stmt->execute(['id' => $id]);
+    }
+
+    public function isUsedBySchedules(int $id): bool
+    {
+        $stmt = $this->db->prepare(
+            "SELECT COUNT(*) as total FROM shift_schedules WHERE shift_id = :id LIMIT 1"
+        );
+        $stmt->execute(['id' => $id]);
+        return (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'] > 0;
     }
 }

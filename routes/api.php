@@ -71,12 +71,27 @@ return [
     ['PUT', '/api/leave/{id}/reject', 'LeaveController', 'reject', ['c_level', 'hrd_manager']],
 
     // ----------------------------------------------------------------
-    // Shift Schedules
+    // Shift Master (CRUD)
     // ----------------------------------------------------------------
     ['GET', '/api/shifts', 'ShiftController', 'index', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
-    ['POST', '/api/shifts/setup', 'ShiftController', 'setup', ['hrd_manager']],
-    ['POST', '/api/shifts/generate', 'ShiftController', 'generate', ['hrd_manager']],
-    ['POST', '/api/shifts/override', 'ShiftController', 'override', ['hrd_manager']],
+    ['POST', '/api/shifts/import', 'ShiftController', 'import', ['c_level', 'hrd_manager']],
+    ['POST', '/api/shifts', 'ShiftController', 'store', ['c_level', 'hrd_manager']],
+    ['GET', '/api/shifts/{id}', 'ShiftController', 'show', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['PUT', '/api/shifts/{id}', 'ShiftController', 'update', ['c_level', 'hrd_manager']],
+    ['DELETE', '/api/shifts/{id}', 'ShiftController', 'destroy', ['c_level', 'hrd_manager']],
+
+    // ----------------------------------------------------------------
+    // Shift Schedule (per user per date)
+    // ----------------------------------------------------------------
+    ['GET', '/api/shift-schedules/my', 'ShiftScheduleController', 'my', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/shift-schedules', 'ShiftScheduleController', 'index', ['c_level', 'hrd_manager', 'technical_manager']],
+    ['POST', '/api/shift-schedules/import', 'ShiftScheduleController', 'import', ['c_level', 'hrd_manager']],
+    ['POST', '/api/shift-schedules/bulk', 'ShiftScheduleController', 'bulkStore', ['c_level', 'hrd_manager']],
+    ['PUT', '/api/shift-schedules/bulk', 'ShiftScheduleController', 'bulkUpdate', ['c_level', 'hrd_manager']],
+    ['POST', '/api/shift-schedules', 'ShiftScheduleController', 'store', ['c_level', 'hrd_manager']],
+    ['GET', '/api/shift-schedules/{id}', 'ShiftScheduleController', 'show', ['c_level', 'hrd_manager', 'technical_manager']],
+    ['PUT', '/api/shift-schedules/{id}', 'ShiftScheduleController', 'update', ['c_level', 'hrd_manager']],
+    ['DELETE', '/api/shift-schedules/{id}', 'ShiftScheduleController', 'destroy', ['c_level', 'hrd_manager']],
 
     // ----------------------------------------------------------------
     // Dashboard

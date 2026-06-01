@@ -1,0 +1,396 @@
+{
+  "info": {
+    "_postman_id": "shift-schedule-collection-001",
+    "name": "Shift Schedule API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "View — My Schedule",
+      "item": [
+        {
+          "name": "My Schedule (default)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules/my",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules", "my"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "My Schedule (date range)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules/my?start_date=2025-06-01&end_date=2025-06-30&limit=31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules", "my"],
+              "query": [
+                { "key": "start_date", "value": "2025-06-01" },
+                { "key": "end_date", "value": "2025-06-30" },
+                { "key": "limit", "value": "31" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "My Schedule (single date)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules/my?date=2025-06-15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules", "my"],
+              "query": [
+                { "key": "date", "value": "2025-06-15" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "View — All Schedules (Admin)",
+      "item": [
+        {
+          "name": "List All Schedules",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List All Schedules (with filters)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules?name=John&team=Backend&start_date=2025-06-01&end_date=2025-06-30&is_day_off=0&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules"],
+              "query": [
+                { "key": "name", "value": "John" },
+                { "key": "team", "value": "Backend" },
+                { "key": "start_date", "value": "2025-06-01" },
+                { "key": "end_date", "value": "2025-06-30" },
+                { "key": "is_day_off", "value": "0" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List All Schedules (single date)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules?date=2025-06-15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules"],
+              "query": [
+                { "key": "date", "value": "2025-06-15" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Schedule by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Add — Single",
+      "item": [
+        {
+          "name": "Create Shift Schedule",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 3,\n  \"date\": \"2025-06-20\",\n  \"shift_id\": 1,\n  \"is_day_off\": 0,\n  \"notes\": \"Jadwal reguler\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Shift Schedule (Day Off)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 3,\n  \"date\": \"2025-06-21\",\n  \"is_day_off\": 1,\n  \"notes\": \"Libur mingguan\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Add — Bulk",
+      "item": [
+        {
+          "name": "Bulk Create (Multi User × Multi Date)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_ids\": [3, 4],\n  \"dates\": [\"2025-06-08\", \"2025-06-09\"],\n  \"shift_id\": 1,\n  \"is_day_off\": 0,\n  \"notes\": \"Shift pagi\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules/bulk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules", "bulk"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Create (Day Off)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_ids\": [3, 4, 5],\n  \"dates\": [\"2025-06-07\", \"2025-06-08\"],\n  \"is_day_off\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules/bulk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules", "bulk"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Add — Import Excel",
+      "item": [
+        {
+          "name": "Import from Excel",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules/import",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules", "import"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Edit — Single",
+      "item": [
+        {
+          "name": "Update Shift Schedule",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shift_id\": 2,\n  \"is_day_off\": 0,\n  \"notes\": \"Ganti ke shift siang\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Shift Schedule (to Day Off)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_day_off\": 1,\n  \"notes\": \"Libur mendadak\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Edit — Bulk",
+      "item": [
+        {
+          "name": "Bulk Update (Per-Row Different Shift)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\"id\": 1, \"shift_id\": 1, \"is_day_off\": 0, \"notes\": \"Shift pagi\"},\n  {\"id\": 2, \"shift_id\": 2, \"is_day_off\": 0, \"notes\": \"Shift siang\"},\n  {\"id\": 3, \"shift_id\": 3, \"is_day_off\": 0, \"notes\": \"Shift malam\"},\n  {\"id\": 4, \"is_day_off\": 1, \"notes\": \"Libur\"}\n]",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules/bulk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules", "bulk"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Delete",
+      "item": [
+        {
+          "name": "Delete Shift Schedule",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{TOKEN}}", "type": "string" }]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/shift-schedules/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shift-schedules", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "TOKEN",
+      "value": ""
+    }
+  ]
+}
