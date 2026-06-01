@@ -38,7 +38,13 @@ class UserService
                 $user['manager_name'],
                 $user['team_id'],
                 $user['team_name'],
-                $user['birth_date']
+                $user['birth_date'],
+                $user['gender'],
+                $user['phone'],
+                $user['address'],
+                $user['religion'],
+                $user['led_team_id'],
+                $user['led_team_name']
             );
             return $user;
         }, $result['data']);
@@ -163,7 +169,7 @@ class UserService
             throw new \InvalidArgumentException('User not found');
         }
 
-        return $this->userModel->update($id, ['is_active' => 0]);
+        return $this->userModel->delete($id);
     }
 
     /** Aktifkan / nonaktifkan user. */

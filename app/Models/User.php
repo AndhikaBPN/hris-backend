@@ -34,19 +34,19 @@ class User
                 VALUES (:name, :birth_date, :photo_profile, :gender, :phone, :address, :religion, :email, :password, :role_id, :is_active, :manager_id, :team_id)";
         $stmt = $this->db->prepare($sql);
         $success = $stmt->execute([
-            'name'          => $data['name'],
-            'birth_date'    => $data['birth_date'] ?? null,
+            'name' => $data['name'],
+            'birth_date' => $data['birth_date'] ?? null,
             'photo_profile' => $data['photo_profile'] ?? null,
-            'gender'        => $data['gender'],
-            'phone'         => $data['phone'],
-            'address'       => $data['address'],
-            'religion'      => $data['religion'] ?? null,
-            'email'         => $data['email'],
-            'password'      => $data['password'],
-            'role_id'       => $data['role_id'],
-            'is_active'     => $data['is_active'] ?? 1,
-            'manager_id'    => $data['manager_id'] ?? null,
-            'team_id'       => $data['team_id'] ?? null,
+            'gender' => $data['gender'],
+            'phone' => $data['phone'],
+            'address' => $data['address'],
+            'religion' => $data['religion'] ?? null,
+            'email' => $data['email'],
+            'password' => $data['password'],
+            'role_id' => $data['role_id'],
+            'is_active' => $data['is_active'] ?? 1,
+            'manager_id' => $data['manager_id'] ?? null,
+            'team_id' => $data['team_id'] ?? null,
         ]);
 
         return $success ? (int) $this->db->lastInsertId() : false;
@@ -94,7 +94,12 @@ class User
 
     public function all(array $filters = []): array
     {
-        $sql = "FROM users u LEFT JOIN `role` r ON u.role_id = r.id LEFT JOIN users m ON u.manager_id = m.id LEFT JOIN `team` t ON u.team_id = t.id WHERE 1=1";
+        $sql = "FROM users u
+                LEFT JOIN `role` r ON u.role_id = r.id
+                LEFT JOIN users m ON u.manager_id = m.id
+                LEFT JOIN `team` t ON u.team_id = t.id
+                LEFT JOIN `team` tl ON tl.team_lead_id = u.id
+                WHERE 1=1";
         $params = [];
 
         if (isset($filters['role'])) {
@@ -117,10 +122,10 @@ class User
             $params['name'] = $filters['name'];
         }
 
-        // Filter default: hanya yang aktif (1) jika tidak ditentukan lain
-        $isActive = isset($filters['is_active']) ? $filters['is_active'] : 1;
-        $sql .= " AND u.is_active = :is_active";
-        $params['is_active'] = $isActive;
+        if (isset($filters['is_active'])) {
+            $sql .= " AND u.is_active = :is_active";
+            $params['is_active'] = $filters['is_active'];
+        }
 
         // Hitung total data
         $countStmt = $this->db->prepare("SELECT COUNT(u.id) as total " . $sql);
@@ -140,10 +145,10 @@ class User
 
         // Map simple names to qualified columns to prevent SQL Injection
         $colMap = [
-            'id'         => 'u.id',
-            'name'       => 'u.name',
-            'email'      => 'u.email',
-            'role'       => 'r.role',
+            'id' => 'u.id',
+            'name' => 'u.name',
+            'email' => 'u.email',
+            'role' => 'r.role',
             'created_at' => 'u.created_at',
         ];
         $sortCol = $colMap[$sortCol] ?? $colMap[$filters['order_by'] ?? ''] ?? 'u.id';
@@ -173,6 +178,7 @@ class User
                 LEFT JOIN `role` r ON u.role_id = r.id
                 LEFT JOIN users m ON u.manager_id = m.id
                 LEFT JOIN `team` t ON u.team_id = t.id
+                LEFT JOIN `team` tl ON tl.team_lead_id = u.id
                 WHERE MONTH(u.birth_date) = :month
                 AND u.is_active = 1
                 ORDER BY DAY(u.birth_date) ASC";
@@ -184,12 +190,17 @@ class User
 
     private function baseSelect(): string
     {
-        return $this->baseSelectColumns() . " FROM users u LEFT JOIN `role` r ON u.role_id = r.id LEFT JOIN users m ON u.manager_id = m.id LEFT JOIN `team` t ON u.team_id = t.id";
+        return $this->baseSelectColumns() . "
+            FROM users u
+            LEFT JOIN `role` r ON u.role_id = r.id
+            LEFT JOIN users m ON u.manager_id = m.id
+            LEFT JOIN `team` t ON u.team_id = t.id
+            LEFT JOIN `team` tl ON tl.team_lead_id = u.id";
     }
 
     private function baseSelectColumns(): string
     {
-        return "SELECT u.id, u.name, u.email, u.birth_date, u.photo_profile, u.gender, u.phone, u.address, u.religion, u.password, u.role_id, r.role, u.is_active, u.manager_id, m.name AS manager_name, u.team_id, t.team_name, u.created_at, u.updated_at";
+        return "SELECT u.id, u.name, u.email, u.birth_date, u.photo_profile, u.gender, u.phone, u.address, u.religion, u.password, u.role_id, r.role, u.is_active, u.manager_id, m.name AS manager_name, u.team_id, t.team_name, tl.id AS led_team_id, tl.team_name AS led_team_name, u.created_at, u.updated_at";
     }
 
     private function findRoleId(string $role): ?int

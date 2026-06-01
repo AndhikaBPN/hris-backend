@@ -21,7 +21,7 @@ class Team
         }
 
         // Count total
-        $countStmt = $this->db->prepare("SELECT COUNT(t.id) as total " . $sql);
+        $countStmt = $this->db->prepare("SELECT COUNT(t.id) as total $sql");
         $countStmt->execute($params);
         $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
@@ -102,9 +102,15 @@ class Team
 
     public function isUsedByUsers(int $id): bool
     {
-        $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM users WHERE team_id = :id LIMIT 1");
-        $stmt->execute(['id' => $id]);
-        return (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'] > 0;
+        $members = $this->db->prepare("SELECT COUNT(*) as total FROM users WHERE team_id = :id LIMIT 1");
+        $members->execute(['id' => $id]);
+        if ((int) $members->fetch(PDO::FETCH_ASSOC)['total'] > 0) {
+            return true;
+        }
+
+        $leader = $this->db->prepare("SELECT COUNT(*) as total FROM team WHERE id = :id AND team_lead_id IS NOT NULL LIMIT 1");
+        $leader->execute(['id' => $id]);
+        return (int) $leader->fetch(PDO::FETCH_ASSOC)['total'] > 0;
     }
 
     public function delete(int $id): bool
