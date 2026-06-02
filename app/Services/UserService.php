@@ -115,6 +115,13 @@ class UserService
 
         unset($data['password']);
 
+        if (!empty($data['email'])) {
+            $existing = $this->userModel->findByEmail($data['email']);
+            if ($existing && (int) $existing['id'] !== $id) {
+                throw new \InvalidArgumentException('Email is already in use');
+            }
+        }
+
         if (isset($data['gender']) && !in_array($data['gender'], ['male', 'female'], true)) {
             throw new \InvalidArgumentException('Gender must be male or female');
         }
@@ -150,9 +157,14 @@ class UserService
             throw new \InvalidArgumentException('Photo size must not exceed 10MB');
         }
 
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $ext      = pathinfo($file['name'], PATHINFO_EXTENSION);
         $filename = uniqid('photo_', true) . '.' . $ext;
-        $dest = __DIR__ . '/../../storage/profiles/' . $filename;
+        $dir      = __DIR__ . '/../../storage/profiles';
+        $dest     = $dir . '/' . $filename;
+
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
 
         if (!move_uploaded_file($file['tmp_name'], $dest) && !rename($file['tmp_name'], $dest)) {
             throw new \RuntimeException('Failed to save photo');
