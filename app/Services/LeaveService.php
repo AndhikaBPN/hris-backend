@@ -6,9 +6,11 @@ class LeaveService
     private LeaveBalance $balanceModel;
     private Attendance $attendanceModel;
     private ShiftSchedule $scheduleModel;
+    private PDO $db;
 
     public function __construct(PDO $db)
     {
+        $this->db              = $db;
         $this->leaveModel      = new LeaveRequest($db);
         $this->balanceModel    = new LeaveBalance($db);
         $this->attendanceModel = new Attendance($db);
@@ -138,12 +140,66 @@ class LeaveService
         return $this->leaveModel->updateStatus($leaveId, 'rejected', $approverId);
     }
 
+    /**
+     * Params:
+     *   view = own   → own records only
+     *   view = team  → all members of the team this user leads + self (team_leader only)
+     *   view = all   → all records (managers only)
+     *
+     * Filters: leave_type, status, date_from, date_to, search (name/team)
+     */
     public function getList(int $userId, string $role, array $filters = []): array
     {
-        if (in_array($role, ['c_level', 'hrd_manager', 'technical_manager'])) {
-            return $this->leaveModel->getAll($filters);
+        $managerRoles = ['c_level', 'hrd_manager', 'technical_manager'];
+        $defaultView  = in_array($role, $managerRoles) ? 'all' : 'own';
+        $view         = $filters['view'] ?? $defaultView;
+        unset($filters['view']);
+
+        if ($view === 'all' && !in_array($role, $managerRoles)) {
+            throw new \InvalidArgumentException('You do not have permission to view all leave requests');
         }
-        return $this->leaveModel->getByUserId($userId, $filters);
+
+        if ($view === 'team' && $role === 'staff') {
+            throw new \InvalidArgumentException('You do not have permission to view team leave requests');
+        }
+
+        if ($view === 'own') {
+            return $this->leaveModel->getAll($filters, [$userId]);
+        }
+
+        if ($view === 'team') {
+            $scopeIds = $this->getTeamScopeIds($userId);
+            return $this->leaveModel->getAll($filters, $scopeIds);
+        }
+
+        // all
+        return $this->leaveModel->getAll($filters);
+    }
+
+    /**
+     * Returns IDs of all members in the team led by $leaderId plus the leader.
+     * Falls back to just [$leaderId] if no led team found.
+     */
+    private function getTeamScopeIds(int $leaderId): array
+    {
+        $teamStmt = $this->db->prepare("SELECT id FROM `team` WHERE team_lead_id = ? LIMIT 1");
+        $teamStmt->execute([$leaderId]);
+        $team = $teamStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$team) {
+            return [$leaderId];
+        }
+
+        $memberStmt = $this->db->prepare("SELECT id FROM users WHERE team_id = ? AND is_active = 1");
+        $memberStmt->execute([(int) $team['id']]);
+        $memberIds = array_column($memberStmt->fetchAll(PDO::FETCH_ASSOC), 'id');
+
+        $ids = array_map('intval', $memberIds);
+        if (!in_array($leaderId, $ids, true)) {
+            $ids[] = $leaderId;
+        }
+
+        return $ids;
     }
 
     public function getRemainingQuota(int $userId): int

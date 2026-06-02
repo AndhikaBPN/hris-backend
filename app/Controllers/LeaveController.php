@@ -33,12 +33,17 @@ class LeaveController
     {
         $authUser = $GLOBALS['auth_user'];
         $filters  = $_GET ?? [];
-        $result   = $this->service->getList(
-            (int) $authUser['id'],
-            $authUser['role'],
-            $filters
-        );
-        ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
+
+        try {
+            $result = $this->service->getList(
+                (int) $authUser['id'],
+                $authUser['role'],
+                $filters
+            );
+            ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
+        } catch (\InvalidArgumentException $e) {
+            ResponseHelper::error($e->getMessage(), 403);
+        }
     }
 
     // GET /api/leave/monthly
