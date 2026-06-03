@@ -26,7 +26,7 @@ class ShiftSchedule
     public function findByUserAndDate(int $userId, string $date): array|false
     {
         $stmt = $this->db->prepare(
-            "SELECT ss.*, s.name as shift_name, s.start_time, s.end_time, s.is_overnight
+            "SELECT ss.*, s.name as shift_name, s.start_time, s.end_time, s.break_start, s.break_end, s.is_overnight
              FROM shift_schedules ss
              LEFT JOIN shifts s ON ss.shift_id = s.id
              WHERE ss.user_id = :user_id AND ss.date = :date

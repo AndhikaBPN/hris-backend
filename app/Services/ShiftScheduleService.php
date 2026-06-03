@@ -357,4 +357,81 @@ class ShiftScheduleService
         );
     }
 
+    public function getUpcomingShift(int $userId, PDO $db): ?array
+    {
+        $attendanceModel = new Attendance($db);
+        $today           = date('Y-m-d');
+        $tomorrow        = date('Y-m-d', strtotime('+1 day'));
+
+        $todaySchedule = $this->scheduleModel->findByUserAndDate($userId, $today);
+
+        if (!$todaySchedule || $todaySchedule['is_day_off']) {
+            return $this->resolveNextDay($userId, $tomorrow, null);
+        }
+
+        $todayAttendance = $attendanceModel->todayByUserId($userId);
+        $doneSessions    = array_column($todayAttendance, 'session');
+        $session1Done    = in_array('1', $doneSessions) || in_array(1, $doneSessions);
+        $session2Done    = in_array('2', $doneSessions) || in_array(2, $doneSessions);
+
+        if (!$session1Done) {
+            return $this->buildResponse($todaySchedule, 1, $todaySchedule['start_time'], $db);
+        }
+
+        if (!$session2Done && !empty($todaySchedule['break_end'])) {
+            return $this->buildResponse($todaySchedule, 2, $todaySchedule['break_end'], $db);
+        }
+
+        return $this->resolveNextDay($userId, $tomorrow, $db);
+    }
+
+    private function resolveNextDay(int $userId, string $date, ?PDO $db): ?array
+    {
+        $schedule = $this->scheduleModel->findByUserAndDate($userId, $date);
+        if (!$schedule || $schedule['is_day_off']) {
+            return null;
+        }
+        return $this->buildResponse($schedule, 1, $schedule['start_time'], $db);
+    }
+
+    private function buildResponse(array $schedule, int $session, string $sessionStart, ?PDO $db): array
+    {
+        $officeName = 'Main Office';
+        if ($db) {
+            $stmt = $db->query("SELECT name FROM office_locations ORDER BY id ASC LIMIT 1");
+            $office = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($office) $officeName = $office['name'];
+        }
+
+        $minutesUntil = $this->minutesUntil($sessionStart, $schedule['is_overnight'] && $session === 2 ? false : (bool) $schedule['is_overnight']);
+
+        return [
+            'date'          => $schedule['date'],
+            'is_today'      => $schedule['date'] === date('Y-m-d'),
+            'shift_name'    => $schedule['shift_name'],
+            'session'       => $session,
+            'start_time'    => substr($sessionStart, 0, 5),
+            'end_time'      => substr($schedule['end_time'], 0, 5),
+            'location'      => $officeName,
+            'is_overnight'  => (bool) $schedule['is_overnight'],
+            'minutes_until' => $minutesUntil,
+        ];
+    }
+
+    private function minutesUntil(string $targetTime, bool $overnight): int
+    {
+        $nowMinutes    = (int) date('H') * 60 + (int) date('i');
+        [$h, $m]       = explode(':', $targetTime);
+        $targetMinutes = (int) $h * 60 + (int) $m;
+
+        $diff = $targetMinutes - $nowMinutes;
+
+        // Overnight: target wraps past midnight
+        if ($overnight && $diff < 0) {
+            $diff += 1440;
+        }
+
+        return max(0, $diff);
+    }
+
 }

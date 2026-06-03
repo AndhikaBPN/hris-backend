@@ -3,10 +3,26 @@
 class ShiftScheduleController
 {
     private ShiftScheduleService $service;
+    private PDO $db;
 
     public function __construct(PDO $db)
     {
         $this->service = new ShiftScheduleService($db);
+        $this->db      = $db;
+    }
+
+    // GET /api/shift-schedules/upcoming
+    public function upcoming(): void
+    {
+        $authUser = $GLOBALS['auth_user'];
+        $result   = $this->service->getUpcomingShift((int) $authUser['id'], $this->db);
+
+        if ($result === null) {
+            ResponseHelper::success(null, 'No upcoming shift found');
+            return;
+        }
+
+        ResponseHelper::success($result, 'Upcoming shift fetched successfully');
     }
 
     // GET /api/shift-schedules/my

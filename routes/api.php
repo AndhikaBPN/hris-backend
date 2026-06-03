@@ -84,6 +84,7 @@ return [
     // ----------------------------------------------------------------
     // Shift Schedule (per user per date)
     // ----------------------------------------------------------------
+    ['GET', '/api/shift-schedules/upcoming', 'ShiftScheduleController', 'upcoming', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/shift-schedules/my', 'ShiftScheduleController', 'my', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/shift-schedules', 'ShiftScheduleController', 'index', ['c_level', 'hrd_manager', 'technical_manager']],
     ['POST', '/api/shift-schedules/import', 'ShiftScheduleController', 'import', ['c_level', 'hrd_manager']],
