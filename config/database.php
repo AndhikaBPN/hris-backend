@@ -30,7 +30,11 @@ class Database
             return $conn;
 
         } catch (PDOException $e) {
-            die("DB Connection Failed: " . $e->getMessage());
+            error_log("DB Connection Failed: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Service unavailable']);
+            exit;
         }
     }
 }

@@ -12,7 +12,11 @@ class JwtHelper
 
     private static function secret(): string
     {
-        return $_ENV['JWT_SECRET'] ?? 'changeme_please';
+        $secret = $_ENV['JWT_SECRET'] ?? null;
+        if (!$secret) {
+            throw new \RuntimeException('JWT_SECRET is not configured');
+        }
+        return $secret;
     }
 
     // ----------------------------------------------------------------

@@ -59,6 +59,11 @@ class User
         return $success ? (int) $this->db->lastInsertId() : false;
     }
 
+    private const UPDATABLE_COLUMNS = [
+        'name', 'birth_date', 'photo_profile', 'gender', 'phone', 'address',
+        'religion', 'email', 'password', 'role_id', 'is_active', 'manager_id', 'team_id',
+    ];
+
     public function update(int $id, array $data): bool
     {
         if (!isset($data['role_id']) && isset($data['role'])) {
@@ -66,11 +71,13 @@ class User
         }
         unset($data['role']);
 
-        // Menyusun query update dinamis sesuai dengan data yang dioper
         $fields = [];
         $params = ['id' => $id];
 
         foreach ($data as $key => $value) {
+            if (!in_array($key, self::UPDATABLE_COLUMNS, true)) {
+                continue;
+            }
             $fields[] = "{$key} = :{$key}";
             $params[$key] = $value;
         }

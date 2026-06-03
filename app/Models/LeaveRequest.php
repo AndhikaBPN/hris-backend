@@ -30,7 +30,13 @@ class LeaveRequest
 
     public function findById(int $id): array|false
     {
-        $stmt = $this->db->prepare("SELECT * FROM leave_requests WHERE id = :id LIMIT 1");
+        $stmt = $this->db->prepare(
+            "SELECT lr.*, r.role
+             FROM leave_requests lr
+             JOIN users u ON u.id = lr.user_id
+             JOIN `role` r ON r.id = u.role_id
+             WHERE lr.id = :id LIMIT 1"
+        );
         $stmt->execute(['id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }

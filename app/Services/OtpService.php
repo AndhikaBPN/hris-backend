@@ -52,6 +52,7 @@ class OtpService
             throw new \InvalidArgumentException('Email and OTP code are required');
         }
 
+        // RuntimeException from model (lockout) propagates up as-is
         $isValid = $this->otpModel->verify($email, $otpCode, $type);
         if (!$isValid) {
             throw new \RuntimeException('Invalid or expired OTP');

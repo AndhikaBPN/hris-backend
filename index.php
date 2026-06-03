@@ -23,10 +23,7 @@ if (in_array($origin, $allowedOrigins, true)) {
 }
 
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: ' . (
-    $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']
-    ?? 'Content-Type, Authorization, Accept, Origin, X-Requested-With'
-));
+header('Access-Control-Allow-Headers: Content-Type, Authorization, Accept, Origin, X-Requested-With');
 header('Access-Control-Max-Age: 86400');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -37,8 +34,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Serve static files from storage/ directly (e.g. profile photos)
 $staticPath = __DIR__ . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if (is_file($staticPath) && str_starts_with(realpath($staticPath), realpath(__DIR__ . '/storage'))) {
-    $mime = mime_content_type($staticPath) ?: 'application/octet-stream';
+    $finfo = new \finfo(FILEINFO_MIME_TYPE);
+    $mime  = $finfo->file($staticPath) ?: 'application/octet-stream';
+    $allowedServeMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+    if (!in_array($mime, $allowedServeMimes, true)) {
+        http_response_code(403);
+        exit;
+    }
     header('Content-Type: ' . $mime);
+    header('Content-Disposition: attachment; filename="' . basename($staticPath) . '"');
     readfile($staticPath);
     exit;
 }

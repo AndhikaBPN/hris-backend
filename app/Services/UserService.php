@@ -148,8 +148,11 @@ class UserService
 
     private function savePhoto(array $file): string
     {
-        $allowed = ['image/jpeg', 'image/png', 'image/webp'];
-        if (!in_array($file['type'], $allowed, true)) {
+        $finfo       = new \finfo(FILEINFO_MIME_TYPE);
+        $detectedMime = $finfo->file($file['tmp_name']);
+
+        $mimeToExt = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        if (!isset($mimeToExt[$detectedMime])) {
             throw new \InvalidArgumentException('Photo must be JPEG, PNG, or WebP');
         }
 
@@ -157,7 +160,7 @@ class UserService
             throw new \InvalidArgumentException('Photo size must not exceed 10MB');
         }
 
-        $ext      = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $ext      = $mimeToExt[$detectedMime];
         $filename = uniqid('photo_', true) . '.' . $ext;
         $dir      = __DIR__ . '/../../storage/profiles';
         $dest     = $dir . '/' . $filename;

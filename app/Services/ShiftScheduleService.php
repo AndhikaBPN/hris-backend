@@ -191,12 +191,15 @@ class ShiftScheduleService
      */
     public function importFromExcel(array $file, int $createdBy): array
     {
-        $allowedMimes = [
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'application/vnd.ms-excel',
-        ];
+        $finfo        = new \finfo(FILEINFO_MIME_TYPE);
+        $detectedMime = $finfo->file($file['tmp_name']);
+        $ext          = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
-        if (!in_array($file['type'], $allowedMimes, true)) {
+        // xlsx = ZIP magic bytes; xls = OLE2 compound document
+        $validXlsx = in_array($detectedMime, ['application/zip', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], true) && $ext === 'xlsx';
+        $validXls  = in_array($detectedMime, ['application/vnd.ms-excel', 'application/x-ole-storage', 'application/octet-stream'], true) && $ext === 'xls';
+
+        if (!$validXlsx && !$validXls) {
             throw new \InvalidArgumentException('File must be Excel (.xlsx or .xls)');
         }
 

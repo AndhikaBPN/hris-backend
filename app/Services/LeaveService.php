@@ -34,6 +34,10 @@ class LeaveService
         }
 
         $leaveType = $data['leave_type'] ?? 'annual';
+        $allowedTypes = ['annual', 'sick', 'permit', 'leave_of_absence'];
+        if (!in_array($leaveType, $allowedTypes, true)) {
+            throw new \InvalidArgumentException('Invalid leave_type. Allowed: annual, sick, permit, leave_of_absence');
+        }
         if ($leaveType === 'sick' && empty($data['doctor_letter'])) {
             throw new \InvalidArgumentException('Doctor\'s letter must be uploaded for sick leave');
         }
@@ -63,6 +67,14 @@ class LeaveService
         return $this->leaveModel->create($data);
     }
 
+    // Approval matrix: submitter role → allowed approver roles
+    private const APPROVAL_MATRIX = [
+        'staff'              => ['hrd_manager'],
+        'team_leader'        => ['hrd_manager'],
+        'hrd_manager'        => ['c_level'],
+        'technical_manager'  => ['c_level'],
+    ];
+
     public function approve(int $leaveId, int $approverId, string $approverRole): bool
     {
         $leave = $this->leaveModel->findById($leaveId);
@@ -70,10 +82,14 @@ class LeaveService
             throw new \RuntimeException('Leave request data not found');
         }
 
-        // Cek wewenang
-        // Ini adalah bypass simpel sesuai role matriks: C-Level approve manager, HRD approve staff
-        if (in_array($approverRole, ['staff', 'team_leader'])) {
-            throw new \RuntimeException('You do not have the authority to approve leave');
+        if ($leave['status'] !== 'pending') {
+            throw new \RuntimeException('Leave request is no longer pending');
+        }
+
+        $submitterRole = $leave['role'] ?? null;
+        $allowedApprovers = self::APPROVAL_MATRIX[$submitterRole] ?? [];
+        if (!in_array($approverRole, $allowedApprovers, true)) {
+            throw new \RuntimeException('You do not have the authority to approve this leave request');
         }
 
         $this->leaveModel->updateStatus($leaveId, 'approved', $approverId);
@@ -137,6 +153,21 @@ class LeaveService
 
     public function reject(int $leaveId, int $approverId, string $approverRole): bool
     {
+        $leave = $this->leaveModel->findById($leaveId);
+        if (!$leave) {
+            throw new \RuntimeException('Leave request data not found');
+        }
+
+        if ($leave['status'] !== 'pending') {
+            throw new \RuntimeException('Leave request is no longer pending');
+        }
+
+        $submitterRole = $leave['role'] ?? null;
+        $allowedApprovers = self::APPROVAL_MATRIX[$submitterRole] ?? [];
+        if (!in_array($approverRole, $allowedApprovers, true)) {
+            throw new \RuntimeException('You do not have the authority to reject this leave request');
+        }
+
         return $this->leaveModel->updateStatus($leaveId, 'rejected', $approverId);
     }
 

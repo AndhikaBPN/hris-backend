@@ -33,8 +33,11 @@ class FaceEmbeddingController
         try {
             $this->service->saveEmbedding((int) $authUser['id'], $embeddings);
             ResponseHelper::success(null, 'Face embedding saved successfully');
+        } catch (\InvalidArgumentException $e) {
+            ResponseHelper::error($e->getMessage(), 422);
         } catch (\Exception $e) {
-            ResponseHelper::error($e->getMessage(), 500);
+            error_log('FaceEmbedding error: ' . $e->getMessage());
+            ResponseHelper::error('Internal server error', 500);
         }
     }
 

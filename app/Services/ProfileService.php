@@ -25,9 +25,8 @@ class ProfileService
 
     public function updateProfile(int $userId, array $data): bool
     {
-        // Cegah pancing update password / role langsung via profile
-        unset($data['password']);
-        unset($data['role']);
+        $allowed = ['name', 'birth_date', 'gender', 'phone', 'address', 'religion', 'photo_profile', 'email'];
+        $data = array_intersect_key($data, array_flip($allowed));
 
         return $this->userModel->update($userId, $data);
     }
