@@ -16,8 +16,14 @@ class LeaveBalanceController
     public function getQuota(): void
     {
         $authUser = $GLOBALS['auth_user'];
-        $quota = $this->service->getLoggedUserQuota((int) $authUser['id']);
+        $year     = isset($_GET['year']) ? (int) $_GET['year'] : null;
 
+        if ($year !== null && ($year < 2000 || $year > 2100)) {
+            ResponseHelper::error(400, 'Invalid year');
+            return;
+        }
+
+        $quota = $this->service->getLoggedUserQuota((int) $authUser['id'], $year);
         ResponseHelper::success($quota, 'User leave quota fetched successfully');
     }
 

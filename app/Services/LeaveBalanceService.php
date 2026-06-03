@@ -11,16 +11,16 @@ class LeaveBalanceService
         $this->leaveBalanceModel = new LeaveBalance($db);
     }
 
-    public function getLoggedUserQuota(int $userId): array
+    public function getLoggedUserQuota(int $userId, ?int $year = null): array
     {
-        $year = (int) date('Y');
+        $year = $year ?? (int) date('Y');
         return $this->leaveBalanceModel->getYearlySummary($userId, $year);
     }
 
     public function generateMonthlyQuota(?int $year = null, ?int $month = null): array
     {
-        $year  = $year  ?? (int) date('Y');
-        $month = $month ?? (int) date('n');
+        $year  ??= (int) date('Y');
+        $month ??= (int) date('n');
 
         $stmt = $this->db->prepare("
             SELECT u.id, u.name
