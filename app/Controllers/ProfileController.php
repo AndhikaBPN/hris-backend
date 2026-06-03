@@ -71,8 +71,13 @@ class ProfileController
         }
 
         try {
-            $this->service->verifyOtpAndChangePassword($email, $otp, $newPw);
-            ResponseHelper::success(null, 'Password changed successfully. Please log in again.');
+            $user  = $this->service->verifyOtpAndChangePassword($email, $otp, $newPw);
+            $token = JwtHelper::generate([
+                'id'    => $user['id'],
+                'email' => $user['email'],
+                'role'  => $user['role'],
+            ]);
+            ResponseHelper::success(['token' => $token, 'user' => $user], 'Password reset successful');
         } catch (\RuntimeException $e) {
             ResponseHelper::error($e->getMessage(), 400);
         }

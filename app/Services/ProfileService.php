@@ -17,10 +17,12 @@ class ProfileService
     public function getProfile(int $userId): array
     {
         $user = $this->userModel->findById($userId);
-        if ($user) {
-            unset($user['password']);
+        if (!$user) {
+            return [];
         }
-        return $user ?: [];
+        unset($user['password']);
+        $user['has_face_registered'] = $this->faceModel->countByUserId($userId) >= 5;
+        return $user;
     }
 
     public function updateProfile(int $userId, array $data): bool
@@ -43,7 +45,7 @@ class ProfileService
         $this->otpService->sendOtp($email, 'reset_password');
     }
 
-    public function verifyOtpAndChangePassword(string $email, string $otpCode, string $newPassword): bool
+    public function verifyOtpAndChangePassword(string $email, string $otpCode, string $newPassword): array
     {
         $user = $this->userModel->findByEmail($email);
         if (!$user) {
@@ -59,7 +61,14 @@ class ProfileService
 
         // Jika valid, ganti password
         $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
-        return $this->userModel->update($user['id'], ['password' => $hashedPassword]);
+        $this->userModel->update($user['id'], ['password' => $hashedPassword]);
+
+        return [
+            'id'    => $user['id'],
+            'name'  => $user['name'],
+            'email' => $user['email'],
+            'role'  => $user['role'],
+        ];
     }
 
     public function updateFaceData(int $userId, array $embeddings): bool

@@ -1,187 +1,320 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working in this repository.
 
 ## Project Overview
 
-HRIS Backend - Human Resource Information System for employee attendance tracking. Focus: preventing attendance fraud through face recognition (biometric embedding vectors) and geo-location validation.
+HRIS Backend — Human Resource Information System for employee attendance tracking at a **Gaming House** (live streaming). Focus: preventing attendance fraud through face recognition (biometric embedding vectors) and geo-location validation.
 
-**Core Features:**
-- Employee authentication (JWT-based)
-- Attendance clock-in with face verification + GPS validation
-- Shift rotation management (Gaming House model: 2×Pagi → 2×Siang → 2×Malam → 2×Libur cycle)
-- Leave/cuti management with approval workflow
-- Role-based access control (RBAC): c_level, hrd_manager, technical_manager, team_leader, staff
-- Dashboard aggregation per role
+**Full requirements:** See `docs/PRD.md`  
+**Coding conventions:** See `instruction.md`  
+**AI agent context:** See `agent.md`
 
-## Tech Stack & Setup
+---
 
-**Language:** PHP 8.x Native (no framework like Laravel)  
-**Database:** MySQL  
-**Auth:** JWT via `firebase/php-jwt`  
-**Routing:** Custom regex-based front controller
+## Tech Stack
+
+- **Language:** PHP 8.x Native (no framework — no Laravel, no CodeIgniter)
+- **Database:** MySQL
+- **Auth:** JWT via `firebase/php-jwt`
+- **Routing:** Custom regex-based front controller (`index.php`)
+- **Autoloader:** Custom `spl_autoload_register` (class files in `app/`)
 
 **Startup:**
 ```bash
-composer install                          # Install dependencies
-cp .env.example .env                      # Copy env config, update DB credentials
-php migrate.php                           # Run migrations (001-014)
-composer serve                            # Start dev server
+composer install
+cp .env.example .env      # Update DB credentials, JWT_SECRET, APP_FRONTEND_URL
+php migrate.php           # Run migrations 001–014
+composer serve            # Start dev server at http://127.0.0.1:8000
 ```
 
-API root: `http://127.0.0.1:8000`
-
-**Reset database (dev only):**
+**Reset DB (dev only):**
 ```bash
 php db_reset.php
 ```
 
+---
+
 ## Architecture: 3-Layer MVC
 
-Routes → Controllers → Services → Models → Database
+```
+Route → Controller → Service → Model → Database
+```
 
-1. **Routes** (`routes/api.php`): HTTP method + path matching, role-based middleware filtering
-2. **Controllers** (`app/Controllers`): Thin layer. Parse JSON/query params, call Service method, return HTTP response via `ResponseHelper`
-3. **Services** (`app/Services`): Thick business logic. All validation, distance calculations, shift rotation, leave approval workflows, JWT creation
-4. **Models** (`app/Models`): Data Access Objects. Pure SQL (INSERT/SELECT/UPDATE/DELETE) via PDO prepared statements (protects SQL injection)
+| Layer | Location | Rule |
+|-------|----------|------|
+| Routes | `routes/api.php` | HTTP method + path + role check |
+| Controllers | `app/Controllers/` | Thin — parse input, call Service, return response |
+| Services | `app/Services/` | Thick — ALL business logic here |
+| Models | `app/Models/` | Pure DAO — SQL via PDO prepared statements only |
+| Helpers | `app/Helpers/` | `JwtHelper`, `ResponseHelper`, `ValidationHelper`, `ExportHelper` |
+| Middleware | `app/Middleware/` | `AuthMiddleware` (JWT), `RoleMiddleware` (RBAC) |
+
+---
 
 ## Key Directories
 
 | Path | Purpose |
 |------|---------|
-| `app/Controllers` | Route action handlers. Thin controllers. |
-| `app/Services` | Business logic, validation, calculations, workflows. |
-| `app/Models` | Database queries (DAO pattern). |
-| `app/Helpers` | `JwtHelper` (token create/verify), `ResponseHelper` (JSON responses), `ValidationHelper` (input validation). |
-| `app/Middleware` | `AuthMiddleware` (JWT validation), `RoleMiddleware` (RBAC enforcement). |
-| `config` | Database connection config (`database.php`). |
-| `database/migrations` | SQL migrations (001-014 sequenced). |
-| `docs` | Architecture docs, flow diagrams, curl examples. |
+| `app/Controllers/` | Route action handlers |
+| `app/Services/` | Business logic, validation, calculations |
+| `app/Models/` | Database queries (DAOs) |
+| `app/Helpers/` | JWT, Response, Validation, Export utilities |
+| `app/Middleware/` | JWT auth + RBAC enforcement |
+| `config/` | Database connection (`database.php`) |
+| `database/migrations/` | Sequential SQL migrations (001–014) |
+| `docs/` | Architecture docs, flow, PRD fragments |
+| `PRD.md` | Product Requirements Document |
+| `agent.md` | AI agent instructions & templates |
+| `instruction.md` | Dev conventions & patterns |
+
+---
+
+## RBAC Roles
+
+| Role | Description |
+|------|------------|
+| `c_level` | Owner/Board. No attendance. Approves manager leave. Full report access. |
+| `hrd_manager` | HRD shift (10:00–18:00, Mon–Fri). Manages users, shifts, approves staff/TL leave. |
+| `technical_manager` | Technical shift (13:00–21:00, Mon–Fri). Admin dashboard access. Leave approved by c_level. |
+| `team_leader` | Rotation shift. Monitors own team. Leave approved by hrd_manager. |
+| `staff` | Rotation shift. Self-service attendance & leave. |
+
+---
+
+## Complete API Endpoints
+
+### Auth (public)
+```
+POST /api/login
+POST /api/logout                     [all authenticated]
+POST /api/password/reset             (OTP-based magic link)
+POST /api/otp/send
+POST /api/otp/verify
+```
+
+### User Management
+```
+GET  /api/users/count                [all]
+GET  /api/users/birthdays            [all]
+GET  /api/users/team-leaders         [all]
+GET  /api/users                      [c_level, hrd_manager]
+GET  /api/users/{id}                 [c_level, hrd_manager]
+POST /api/users                      [c_level, hrd_manager]
+PUT  /api/users/{id}                 [c_level, hrd_manager]
+DELETE /api/users/{id}               [c_level, hrd_manager]
+```
+
+### Team Management
+```
+GET  /api/teams/count                [all]
+GET  /api/teams                      [all]
+GET  /api/teams/{id}                 [all]
+POST /api/teams                      [c_level, hrd_manager, technical_manager]
+PUT  /api/teams/{id}                 [c_level, hrd_manager, technical_manager]
+DELETE /api/teams/{id}               [c_level, hrd_manager, technical_manager]
+```
+
+### Role Management
+```
+GET  /api/roles/count                [all]
+GET  /api/roles                      [c_level, hrd_manager]
+GET  /api/roles/{id}                 [c_level, hrd_manager]
+POST /api/roles                      [c_level, hrd_manager]
+PUT  /api/roles/{id}                 [c_level, hrd_manager]
+DELETE /api/roles/{id}               [c_level, hrd_manager]
+```
+
+### Attendance
+```
+POST /api/attendance/clock-in        [hrd_manager, technical_manager, team_leader, staff]
+POST /api/attendance/clock-out       [hrd_manager, technical_manager, team_leader, staff]
+GET  /api/attendance/my              [all]
+GET  /api/attendance                 [all]
+GET  /api/attendance/today           [all]
+GET  /api/attendance/subordinates/today [c_level, hrd_manager, technical_manager, team_leader]
+GET  /api/attendance/summary         [c_level, hrd_manager]
+```
+
+### Leave
+```
+POST /api/leave                      [hrd_manager, technical_manager, team_leader, staff]
+GET  /api/leave                      [all]
+GET  /api/leave/monthly              [all]
+GET  /api/leave/quota                [all]   (?year=YYYY)
+POST /api/leave/quota/generate       [c_level, hrd_manager]
+PUT  /api/leave/{id}/approve         [c_level, hrd_manager]
+PUT  /api/leave/{id}/reject          [c_level, hrd_manager]
+```
+
+### Shift Master
+```
+GET  /api/shifts                     [all]
+POST /api/shifts                     [c_level, hrd_manager]
+POST /api/shifts/import              [c_level, hrd_manager]
+GET  /api/shifts/{id}                [all]
+PUT  /api/shifts/{id}                [c_level, hrd_manager]
+DELETE /api/shifts/{id}              [c_level, hrd_manager]
+```
+
+### Shift Schedule
+```
+GET  /api/shift-schedules/upcoming   [all]
+GET  /api/shift-schedules/my         [all]
+GET  /api/shift-schedules            [c_level, hrd_manager, technical_manager]
+POST /api/shift-schedules/import     [c_level, hrd_manager]
+POST /api/shift-schedules/bulk       [c_level, hrd_manager]
+PUT  /api/shift-schedules/bulk       [c_level, hrd_manager]
+POST /api/shift-schedules            [c_level, hrd_manager]
+GET  /api/shift-schedules/{id}       [c_level, hrd_manager, technical_manager]
+PUT  /api/shift-schedules/{id}       [c_level, hrd_manager]
+DELETE /api/shift-schedules/{id}     [c_level, hrd_manager]
+```
+
+### Dashboard
+```
+GET  /api/dashboard/admin            [c_level, hrd_manager, technical_manager]
+GET  /api/dashboard/team-leader      [team_leader]
+GET  /api/dashboard/staff            [team_leader, staff]
+```
+
+### Report
+```
+GET  /api/report/attendance          [c_level, hrd_manager]
+GET  /api/report/leave               [c_level, hrd_manager]
+```
+
+### Profile
+```
+GET  /api/profile                    [all]
+PUT  /api/profile                    [all]
+```
+
+### Face Embeddings
+```
+GET  /api/face-embeddings            [all]
+POST /api/face-embeddings            [all]
+```
+
+### Office Locations
+```
+GET  /api/office-locations           [all]
+GET  /api/office-locations/{id}      [all]
+POST /api/office-locations           [c_level, hrd_manager]
+PUT  /api/office-locations/{id}      [c_level, hrd_manager]
+DELETE /api/office-locations/{id}    [c_level, hrd_manager]
+```
+
+---
+
+## Core Business Logic
+
+### Attendance Model (Session-Based)
+- **Session 1** = clock-in awal shift
+- **Session 2** = clock-in sesi kedua (setelah break)
+- **No clock-out** for staff/team_leader
+- Late = > 15 menit dari `shift.start_time`
+- Validation failure → record tetap INSERT dengan `status=invalid` + audit log ke `attendance_logs`
+
+### Shift Rotation (staff/team_leader)
+```
+2×Pagi → 2×Siang → 2×Malam → 2×Libur → repeat
+```
+Manager: shift tetap, Senin–Jumat.
+
+### Leave Approval Chain
+- Staff/Team Leader → `hrd_manager` approves
+- hrd_manager/technical_manager → `c_level` approves
+- Sick leave: `doctor_letter` upload wajib
+- On approve: `LeaveBalance::incrementUsed()` dipanggil
+
+### Password Reset Flow (Magic Link)
+1. Manager buat user → backend generate OTP (15 menit, single-use) → email magic link
+2. Link: `{FRONTEND_URL}/set-password?email=...&token=...`
+3. User POST ke `/api/password/reset` dengan `{email, otp_code, new_password, new_password_confirmation}`
+
+---
+
+## Key Constants & Thresholds
+
+| Parameter | Value |
+|-----------|-------|
+| Face match | Euclidean distance < 0.5 |
+| Geo radius | ≤ 50 meters (Haversine) |
+| Late threshold | > 15 menit dari shift start_time |
+| JWT TTL | env `JWT_TTL` (default 86400 = 24h) |
+| OTP TTL | 15 menit, single-use |
+| Leave quota | 1 hari/bulan per karyawan |
+| Shift rotation | 2 hari each (pagi, siang, malam), 2 hari off |
+
+---
+
+## Database Migrations (001–014)
+
+| # | Purpose |
+|---|---------|
+| 001 | users |
+| 002 | face_embeddings (128-D vector JSON) |
+| 003 | office_locations |
+| 004 | shifts (master: Pagi/Siang/Malam/HRD/Technical) |
+| 005 | shift_schedules (daily per user, is_day_off flag) |
+| 006 | attendance (session 1/2, face_image, distance, status) |
+| 007 | attendance_logs (audit failures) |
+| 008 | leave_requests |
+| 009 | leave_balances (monthly quota) |
+| 010 | indexes (performance) |
+| 011 | seed_shifts |
+| 012 | seed_superadmin |
+| 013 | password_resets (OTP tokens) |
+| 014 | token_blacklists (JWT revocation) |
+
+---
+
+## Coding Patterns (Quick Reference)
+
+**Controller:**
+```php
+$data = json_decode(file_get_contents('php://input'), true);
+try {
+    $result = $this->service->store($data, $currentUser);
+    return ResponseHelper::json(201, 'Created', $result);
+} catch (Exception $e) {
+    return ResponseHelper::json(400, $e->getMessage());
+}
+```
+
+**Service:**
+```php
+if (empty($data['field'])) throw new InvalidArgumentException('Field required');
+$distance = $this->haversine($coords, $officeCoords);
+if ($distance > 50) throw new Exception('Out of radius');
+```
+
+**Model:**
+```php
+$stmt = $this->db->prepare('SELECT * FROM users WHERE id = ?');
+$stmt->execute([$id]);
+return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+```
+
+---
 
 ## Common Development Commands
 
 ```bash
-# Test shift rotation logic
-php tests/shift_rotation_demo.php
-
-# Run test suite
-composer test              # Executes php tests/run.php
-
-# Single test file
-php tests/run.php          # Main test runner
-
-# Check migrations
-php -r "require 'config/database.php';" # Verify DB connection
+composer install           # Install dependencies
+php migrate.php            # Run all migrations
+composer serve             # Start server at http://127.0.0.1:8000
+php db_reset.php           # Reset DB (dev only)
+composer test              # Run test suite
+php tests/run.php          # Manual test runner
+php tests/shift_rotation_demo.php  # Test shift rotation logic
 ```
 
-## Database Migrations
+---
 
-Migrations run **sequentially** (001–014):
+## CORS Origins (index.php)
 
-| # | Purpose |
-|---|---------|
-| 001 | users (biodata, role, manager_id) |
-| 002 | face_embeddings (128-D vector JSON) |
-| 003 | office_locations (lat/long for geo validation) |
-| 004 | shifts (master: Morning 06-14, Afternoon 14-22, Night 22-06, HRD 10-18, Technical 13-21) |
-| 005 | shift_schedules (daily per employee, rotations + days off) |
-| 006 | attendance (clock events, session 1/2, face_image, distance, status) |
-| 007 | attendance_logs (audit of failures: geo radius, face mismatch) |
-| 008 | leave_requests (annual/sick, doctor_letter for sick, approval chain) |
-| 009 | leave_balances (monthly quota per user, defaults 1 day/month) |
-| 010 | indexes (performance optimization) |
-| 011 | seed_shifts (populate master shifts) |
-| 012 | seed_superadmin (create admin user) |
-| 013 | password_resets (token-based password recovery) |
-| 014 | token_blacklists (JWT revocation on logout) |
-
-## API Routing & Roles
-
-Routes defined in `routes/api.php`. Format: `[METHOD, pattern, ControllerClass, method, roles[]]`
-
-**Empty roles[] = public (no auth required).** Supported roles: `c_level`, `hrd_manager`, `technical_manager`, `team_leader`, `staff`.
-
-Example: `['POST', '/api/attendance', 'AttendanceController', 'store', ['hrd_manager', 'technical_manager', 'team_leader', 'staff']]`
-
-Entry point (`index.php`):
-1. CORS headers (before bootstrap)
-2. Require `bootstrap.php` (autoloader, DB connection)
-3. Loop routes to match METHOD + URI regex pattern
-4. Check JWT token validity (if required roles non-empty)
-5. Check user role membership
-6. Call controller action
-
-## Core Flows
-
-### Attendance (Session-Based, No Clock-Out)
-
-Gaming House uses **Session 1 + Session 2** model (no traditional clock-out):
-- **Session 1:** Employee clock-in at shift start (e.g., 06:00). Validates face + GPS. Flags `late` if >15min after `start_time`. Status: `valid`/`invalid`.
-- **Session 2:** Employee clock-in again mid-shift (e.g., after break). Same biometric + geo checks.
-- **On failure:** Record NOT rejected. Logged to `attendance_logs` (audit), status → `invalid` in DB.
-
-**Service:** `AttendanceService::store()` handles Euclidean distance (face embeddings, threshold < 0.5) + Haversine distance (geo, ≤50m valid).
-
-### Shift Rotation
-
-**Rotation cycle** for staff/team_leader: 2×Pagi → 2×Siang → 2×Malam → 2×Libur (off) → repeat.
-
-Managers (hrd/technical): Fixed shifts (Senin–Jumat on their designated shift).
-
-**Service:** `ShiftService::generateSchedule()` auto-loops rotations. HRD can `override()` for ad-hoc swap.
-
-**Models:** `Shift` (master), `ShiftSchedule` (per-employee daily), `ShiftConfig` (user rotation start point).
-
-### Leave Request Workflow
-
-1. Staff/team_leader/manager submits leave (annual or sick; sick requires `doctor_letter` file upload).
-2. **Approval chain:**
-   - Staff/team_leader cuti → `hrd_manager` approves
-   - hrd_manager/technical_manager cuti → `c_level` approves
-3. On approval: `LeaveBalance::incrementUsed()` deducts 1 from monthly quota.
-4. Quota reset monthly (generated per month auto).
-
-**Service:** `LeaveService` handles request + approval logic.
-
-## Coding Patterns
-
-**Controllers:** Parse input, call Service, return `ResponseHelper::json()`.
-```php
-// Example
-$data = json_decode(file_get_contents('php://input'), true);
-$result = $this->attendanceService->store($data, $currentUser);
-return ResponseHelper::json(200, 'Attendance recorded', $result);
-```
-
-**Services:** All logic goes here. Interact with Models.
-```php
-$distance = $this->haversine($gpsCoords, $officeCoords);
-if ($distance > 50) throw new Exception('Out of radius');
-```
-
-**Models:** Pure SQL.
-```php
-public function findById($id) {
-    $stmt = $this->db->prepare('SELECT * FROM users WHERE id = ?');
-    $stmt->execute([$id]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
-}
-```
-
-**Middleware:** `AuthMiddleware` validates JWT. `RoleMiddleware` checks user role against allowed roles array from route.
-
-## Key Constants & Thresholds
-
-- **Face match threshold:** < 0.5 Euclidean distance → match
-- **Geo validation:** ≤ 50 meters → valid
-- **Late threshold:** > 15 minutes after shift start_time
-- **JWT TTL:** 3600 seconds (env var `JWT_TTL`)
-- **Shift rotation:** 2 days each (pagi, siang, malam), 2 days off
-- **Leave quota:** 1 day per month (default)
-
-## CORS & Local Development
-
-Allowed origins in `index.php`:
 ```
 http://localhost:5500
 http://127.0.0.1:5500
@@ -189,33 +322,31 @@ http://localhost:3000
 http://127.0.0.1:3000
 ```
 
-Frontend served on different port (usually 5500 or 3000). Add more origins if needed before bootstrap.
+Add new origins in `index.php` before `require bootstrap.php`.
 
-## Testing
-
-`tests/run.php` is the test runner. Individual tests in `tests/` directory.
-
-**Example:** `shift_rotation_demo.php` demonstrates rotation logic.
-
-## Error Handling & Responses
-
-All responses via `ResponseHelper::json(statusCode, message, data)`.
-
-Standard HTTP status codes: 200 (success), 400 (bad request), 401 (unauthorized), 403 (forbidden), 404 (not found), 500 (server error).
-
-**Exception handling:** Try/catch in Controllers or Services, convert to JSON response.
+---
 
 ## Important Notes
 
-- **No framework:** Pure PHP + custom routing. No auto-magical validation, ORM, or middleware chains—keep it explicit.
-- **Prepared statements always:** Prevent SQL injection. Models use PDO prepared statements.
-- **JWT stored client-side:** Backend does NOT store tokens (stateless). Token blacklist only for logout (optional, depends on frontend).
-- **Role-based filtering:** Routes define allowed roles. `RoleMiddleware` enforces. Always double-check role arrays in `routes/api.php`.
-- **Shift generation:** Auto-runs via HRD endpoint `POST /api/shifts/generate`. Must be called explicitly; no cron yet.
-- **Face embeddings:** 128-dimensional JSON array stored as TEXT in DB. Comparison done in-memory via Service.
+- **No framework** — no auto-magical validation, ORM, or middleware chains. Keep it explicit.
+- **Prepared statements always** — Models use PDO prepared statements. Never string concatenate user input.
+- **JWT stateless** — Backend doesn't store tokens. Blacklist table only for logout.
+- **Role enforcement** — `routes/api.php` defines allowed roles. `RoleMiddleware` enforces. Always verify role arrays.
+- **Specific routes before wildcards** — `/api/shifts/import` must appear before `/api/shifts/{id}` in route table.
+- **Attendance failure = audit, not reject** — Always insert to `attendance_logs` on face/geo failure.
+- **Report access** — staff sees own data; team_leader sees managed team; managers/c_level see all.
+
+---
 
 ## References
 
-- **Architecture Details:** `docs/hris_architecture_v2.md`
-- **Flow Diagrams:** `docs/flow.md`
-- **UML & Curl Examples:** `docs/uml_diagrams.md`, `docs/curl_collections.md`
+| Doc | Content |
+|-----|---------|
+| `docs/PRD.md` | Full product requirements |
+| `agent.md` | AI agent instructions, templates, checklist |
+| `instruction.md` | Coding conventions, patterns, env vars |
+| `docs/hris_architecture_v2.md` | Architecture narrative |
+| `docs/flow.md` | Meeting notes & business rules |
+| `docs/report_implementations.md` | Report feature spec |
+| `docs/set-password-flow.md` | Magic link / OTP flow for frontend |
+| `docs/leave_quota_scheduler.md` | Leave quota cron spec |

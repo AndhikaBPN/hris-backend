@@ -31,8 +31,65 @@ class FaceEmbeddingController
         }
 
         try {
-            $this->service->saveEmbedding((int) $authUser['id'], $embeddings);
-            ResponseHelper::success(null, 'Face embedding saved successfully');
+            $total = $this->service->saveEmbedding((int) $authUser['id'], $embeddings);
+            ResponseHelper::success(['total_samples' => $total], 'Face embedding saved successfully');
+        } catch (\InvalidArgumentException $e) {
+            ResponseHelper::error($e->getMessage(), 422);
+        } catch (\Exception $e) {
+            error_log('FaceEmbedding error: ' . $e->getMessage());
+            ResponseHelper::error('Internal server error', 500);
+        }
+    }
+
+    // GET /api/face-embeddings/{userId} — admin get another user's embeddings
+    public function showByUser(int $userId): void
+    {
+        try {
+            $data = $this->service->getEmbedding($userId);
+            ResponseHelper::success($data, 'Face data loaded successfully');
+        } catch (\Exception $e) {
+            error_log('FaceEmbedding error: ' . $e->getMessage());
+            ResponseHelper::error('Internal server error', 500);
+        }
+    }
+
+    // PUT /api/face-embeddings — replace own embeddings
+    public function update(): void
+    {
+        $authUser = $GLOBALS['auth_user'];
+        $body = $this->json();
+
+        $embeddings = $body['embeddings'] ?? null;
+        if (!$embeddings || !is_array($embeddings)) {
+            ResponseHelper::error('Invalid face embedding matrix format', 422);
+            return;
+        }
+
+        try {
+            $total = $this->service->updateEmbedding((int) $authUser['id'], $embeddings);
+            ResponseHelper::success(['total_samples' => $total], 'Face embedding updated successfully');
+        } catch (\InvalidArgumentException $e) {
+            ResponseHelper::error($e->getMessage(), 422);
+        } catch (\Exception $e) {
+            error_log('FaceEmbedding error: ' . $e->getMessage());
+            ResponseHelper::error('Internal server error', 500);
+        }
+    }
+
+    // PUT /api/face-embeddings/{userId} — admin replace another user's embeddings
+    public function updateByUser(int $userId): void
+    {
+        $body = $this->json();
+
+        $embeddings = $body['embeddings'] ?? null;
+        if (!$embeddings || !is_array($embeddings)) {
+            ResponseHelper::error('Invalid face embedding matrix format', 422);
+            return;
+        }
+
+        try {
+            $total = $this->service->updateEmbedding($userId, $embeddings);
+            ResponseHelper::success(['user_id' => $userId, 'total_samples' => $total], 'Face embedding updated successfully');
         } catch (\InvalidArgumentException $e) {
             ResponseHelper::error($e->getMessage(), 422);
         } catch (\Exception $e) {

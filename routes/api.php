@@ -118,7 +118,10 @@ return [
     // Face Recognition Setup
     // ----------------------------------------------------------------
     ['GET', '/api/face-embeddings', 'FaceEmbeddingController', 'show', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/face-embeddings/{id}', 'FaceEmbeddingController', 'showByUser', ['c_level', 'hrd_manager']],
     ['POST', '/api/face-embeddings', 'FaceEmbeddingController', 'store', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['PUT', '/api/face-embeddings', 'FaceEmbeddingController', 'update', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['PUT', '/api/face-embeddings/{id}', 'FaceEmbeddingController', 'updateByUser', ['c_level', 'hrd_manager']],
 
     // ----------------------------------------------------------------
     // Office Location

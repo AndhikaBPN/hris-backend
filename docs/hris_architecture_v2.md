@@ -70,10 +70,7 @@ Database dibangun dan dipisah menjadi modul migrasi sekuensial (001 s/d 012):
 
 Berdasarkan dokumen `notes.txt` & `flow.md`:
 
-* Level `staff` dan `team_leader` tidak memiliki jadwal kerja statis tiap minggunya. Mereka terkena **Sistem Rotasi**:
-
-  * `2x Shift Pagi` -> `2x Shift Siang` -> `2x Shift Malam` -> `2x Libur (Off)` -> Begitu siklus ini memutar terus menerus bergantian.
-
+* Level `staff` dan `team_leader` tidak memiliki jadwal kerja statis tiap minggunya.
 * Level manajer (`hrd_manager` & `technical_manager`) masuk Senin-Jumat pada _shift tetap* mereka.
 * Sistem shift ini digenerate secara otomatis oleh system `ShiftService::generateSchedule`, dan bisa di-*override* oleh HRD seandainya ada pertukaran *shift* mendadak.
 

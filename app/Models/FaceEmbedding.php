@@ -27,9 +27,23 @@ class FaceEmbedding
         ]);
     }
 
+    public function countByUserId(int $userId): int
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS cnt FROM face_embeddings WHERE user_id = :user_id");
+        $stmt->execute(['user_id' => $userId]);
+        return (int) $stmt->fetch(PDO::FETCH_ASSOC)['cnt'];
+    }
+
     public function deleteByUserId(int $userId): bool
     {
         $stmt = $this->db->prepare("DELETE FROM face_embeddings WHERE user_id = :user_id");
         return $stmt->execute(['user_id' => $userId]);
+    }
+
+    public function replaceByUserId(int $userId, array $embeddings): int
+    {
+        $this->deleteByUserId($userId);
+        $this->save($userId, $embeddings);
+        return $this->countByUserId($userId);
     }
 }

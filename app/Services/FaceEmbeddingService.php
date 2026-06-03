@@ -14,8 +14,17 @@ class FaceEmbeddingService
         return $this->faceEmbeddingModel->getByUserId($userId);
     }
 
-    public function saveEmbedding(int $userId, array $embeddings): bool
+    public function saveEmbedding(int $userId, array $embeddings): int
     {
-        return $this->faceEmbeddingModel->save($userId, $embeddings);
+        $this->faceEmbeddingModel->save($userId, $embeddings);
+        return $this->faceEmbeddingModel->countByUserId($userId);
+    }
+
+    public function updateEmbedding(int $userId, array $embeddings): int
+    {
+        if (empty($embeddings)) {
+            throw new \InvalidArgumentException('Embeddings array cannot be empty');
+        }
+        return $this->faceEmbeddingModel->replaceByUserId($userId, $embeddings);
     }
 }
