@@ -8,7 +8,10 @@ use Firebase\JWT\BeforeValidException;
 
 class JwtHelper
 {
-    private static int $ttl = 3600; // 1 jam
+    private static function ttl(): int
+    {
+        return (int) ($_ENV['JWT_TTL'] ?? 86400);
+    }
 
     private static function secret(): string
     {
@@ -28,7 +31,7 @@ class JwtHelper
 
         $claims = array_merge($payload, [
             'iat' => $now,
-            'exp' => $now + self::$ttl,
+            'exp' => $now + self::ttl(),
         ]);
 
         return JWT::encode($claims, self::secret(), 'HS256');
