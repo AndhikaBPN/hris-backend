@@ -67,6 +67,7 @@ return [
     ['GET', '/api/leave', 'LeaveController', 'index', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/leave/monthly', 'LeaveController', 'monthlyLeaves', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/leave/quota', 'LeaveBalanceController', 'getQuota', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['POST', '/api/leave/quota/generate', 'LeaveBalanceController', 'generateQuota', ['c_level', 'hrd_manager']],
     ['PUT', '/api/leave/{id}/approve', 'LeaveController', 'approve', ['c_level', 'hrd_manager']],
     ['PUT', '/api/leave/{id}/reject', 'LeaveController', 'reject', ['c_level', 'hrd_manager']],
 
