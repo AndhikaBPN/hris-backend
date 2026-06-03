@@ -6,16 +6,17 @@ class AttendanceService
     private ShiftSchedule $scheduleModel;
     private FaceEmbedding $faceModel;
     private OfficeLocation $officeModel;
-
     private AttendanceLog $logModel;
+    private User $userModel;
 
     public function __construct(PDO $db)
     {
         $this->attendanceModel = new Attendance($db);
-        $this->scheduleModel = new ShiftSchedule($db);
-        $this->faceModel = new FaceEmbedding($db);
-        $this->officeModel = new OfficeLocation($db);
-        $this->logModel = new AttendanceLog($db);
+        $this->scheduleModel   = new ShiftSchedule($db);
+        $this->faceModel       = new FaceEmbedding($db);
+        $this->officeModel     = new OfficeLocation($db);
+        $this->logModel        = new AttendanceLog($db);
+        $this->userModel       = new User($db);
     }
 
     public function clockIn(
@@ -27,6 +28,10 @@ class AttendanceService
         float $distanceToOffice = 0
     ): array {
         $todayStr = date('Y-m-d');
+        $user = $this->userModel->findById($userId);
+        if ($user) {
+            $this->scheduleModel->autoProvisionManager($userId, $user['role'], $todayStr);
+        }
         $result = $this->scheduleModel->getByUserId($userId, ['date' => $todayStr]);
         if (!is_array($result) || !isset($result['data'])) {
             throw new \RuntimeException('Failed to retrieve shift schedule');

@@ -4,9 +4,34 @@ class ShiftSchedule
 {
     private PDO $db;
 
+    private const MANAGER_SHIFT_MAP = [
+        'hrd_manager'        => 4,
+        'technical_manager'  => 5,
+    ];
+
     public function __construct(PDO $db)
     {
         $this->db = $db;
+    }
+
+    /**
+     * Auto-create fixed shift schedule for manager roles if none exists for the date.
+     * Idempotent — does nothing if schedule already exists.
+     */
+    public function autoProvisionManager(int $userId, string $role, string $date): void
+    {
+        if (!isset(self::MANAGER_SHIFT_MAP[$role])) return;
+
+        $existing = $this->findByUserAndDate($userId, $date);
+        if ($existing) return;
+
+        $this->create($userId, [
+            'shift_id'   => self::MANAGER_SHIFT_MAP[$role],
+            'date'       => $date,
+            'is_day_off' => 0,
+            'created_by' => null,
+            'notes'      => 'auto-provisioned',
+        ]);
     }
 
     public function findById(int $id): array|false

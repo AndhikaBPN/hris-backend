@@ -360,8 +360,16 @@ class ShiftScheduleService
     public function getUpcomingShift(int $userId, PDO $db): ?array
     {
         $attendanceModel = new Attendance($db);
+        $userModel       = new User($db);
         $today           = date('Y-m-d');
         $tomorrow        = date('Y-m-d', strtotime('+1 day'));
+
+        $user = $userModel->findById($userId);
+        $role = $user['role'] ?? '';
+
+        // Auto-provision fixed shifts for manager roles
+        $this->scheduleModel->autoProvisionManager($userId, $role, $today);
+        $this->scheduleModel->autoProvisionManager($userId, $role, $tomorrow);
 
         $todaySchedule = $this->scheduleModel->findByUserAndDate($userId, $today);
 
@@ -432,6 +440,19 @@ class ShiftScheduleService
         }
 
         return max(0, $diff);
+    }
+
+    private function validateRow(array $data): void
+    {
+        if (empty($data['user_id'])) {
+            throw new \InvalidArgumentException('user_id is required');
+        }
+        if (empty($data['date']) || !\DateTimeImmutable::createFromFormat('Y-m-d', $data['date'])) {
+            throw new \InvalidArgumentException('date is required and must be YYYY-MM-DD format');
+        }
+        if (empty($data['is_day_off']) && empty($data['shift_id'])) {
+            throw new \InvalidArgumentException('shift_id is required when is_day_off is 0');
+        }
     }
 
 }
