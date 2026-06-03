@@ -105,8 +105,11 @@ return [
     // ----------------------------------------------------------------
     // Report
     // ----------------------------------------------------------------
-    ['GET', '/api/report/attendance', 'ReportController', 'attendance', ['c_level', 'hrd_manager']],
-    ['GET', '/api/report/leave', 'ReportController', 'leave', ['c_level', 'hrd_manager']],
+    ['GET', '/api/reports/attendance',    'ReportController', 'attendance', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/reports/leave',         'ReportController', 'leave',      ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/reports/employees',     'ReportController', 'employees',  ['c_level', 'hrd_manager', 'technical_manager', 'team_leader']],
+    ['GET', '/api/reports/shifts',        'ReportController', 'shifts',     ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/reports/{type}/export', 'ReportController', 'export',     ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
 
     // ----------------------------------------------------------------
     // Profile
