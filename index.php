@@ -13,6 +13,7 @@ $allowedOrigins = [
     'http://127.0.0.1:5500',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    'http://127.0.0.1:4040',
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -35,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $staticPath = __DIR__ . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if (is_file($staticPath) && str_starts_with(realpath($staticPath), realpath(__DIR__ . '/storage'))) {
     $finfo = new \finfo(FILEINFO_MIME_TYPE);
-    $mime  = $finfo->file($staticPath) ?: 'application/octet-stream';
+    $mime = $finfo->file($staticPath) ?: 'application/octet-stream';
     $allowedServeMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
     if (!in_array($mime, $allowedServeMimes, true)) {
         http_response_code(403);
@@ -68,11 +69,14 @@ if (in_array($method, ['PUT', 'PATCH'], true)) {
         $raw = file_get_contents('php://input');
         foreach (explode("--{$boundary}", $raw) as $part) {
             $part = ltrim($part, "\r\n");
-            if ($part === '' || str_starts_with($part, '--')) continue;
-            if (!str_contains($part, "\r\n\r\n")) continue;
+            if ($part === '' || str_starts_with($part, '--'))
+                continue;
+            if (!str_contains($part, "\r\n\r\n"))
+                continue;
             [$headers, $body] = explode("\r\n\r\n", $part, 2);
             $body = rtrim($body, "\r\n");
-            if (!preg_match('/;\s*name="([^"]+)"/i', $headers, $nm)) continue;
+            if (!preg_match('/;\s*name="([^"]+)"/i', $headers, $nm))
+                continue;
             $name = $nm[1];
             if (preg_match('/filename="([^"]+)"/i', $headers, $fm)) {
                 $mime = 'application/octet-stream';
@@ -82,11 +86,11 @@ if (in_array($method, ['PUT', 'PATCH'], true)) {
                 $tmp = tempnam(sys_get_temp_dir(), 'php_put_');
                 file_put_contents($tmp, $body);
                 $_FILES[$name] = [
-                    'name'     => $fm[1],
-                    'type'     => $mime,
+                    'name' => $fm[1],
+                    'type' => $mime,
                     'tmp_name' => $tmp,
-                    'error'    => UPLOAD_ERR_OK,
-                    'size'     => strlen($body),
+                    'error' => UPLOAD_ERR_OK,
+                    'size' => strlen($body),
                 ];
             } else {
                 $_POST[$name] = $body;
