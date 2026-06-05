@@ -6,6 +6,7 @@ class LeaveService
     private LeaveBalance $balanceModel;
     private Attendance $attendanceModel;
     private ShiftSchedule $scheduleModel;
+    private NotificationService $notifService;
     private PDO $db;
 
     public function __construct(PDO $db)
@@ -15,6 +16,7 @@ class LeaveService
         $this->balanceModel    = new LeaveBalance($db);
         $this->attendanceModel = new Attendance($db);
         $this->scheduleModel   = new ShiftSchedule($db);
+        $this->notifService    = new NotificationService($db);
     }
 
     /**
@@ -64,7 +66,15 @@ class LeaveService
         }
 
         $data['user_id'] = $userId;
-        return $this->leaveModel->create($data);
+        $leaveId = $this->leaveModel->create($data);
+
+        $submitterName = $this->getUserName($userId);
+        $this->notifService->notifyLeaveSubmitted(
+            array_merge($data, ['id' => $leaveId]),
+            $submitterName
+        );
+
+        return $leaveId;
     }
 
     // Approval matrix: submitter role → allowed approver roles
@@ -103,6 +113,9 @@ class LeaveService
 
         // Buat record attendance otomatis sesuai tipe leave
         $this->createLeaveAttendance($leave);
+
+        $submitterName = $this->getUserName((int) $leave['user_id']);
+        $this->notifService->notifyLeaveDecision($leave, $submitterName, 'approved', $approverRole, $approverId);
 
         return true;
     }
@@ -168,7 +181,12 @@ class LeaveService
             throw new \RuntimeException('You do not have the authority to reject this leave request');
         }
 
-        return $this->leaveModel->updateStatus($leaveId, 'rejected', $approverId);
+        $this->leaveModel->updateStatus($leaveId, 'rejected', $approverId);
+
+        $submitterName = $this->getUserName((int) $leave['user_id']);
+        $this->notifService->notifyLeaveDecision($leave, $submitterName, 'rejected', $approverRole, $approverId);
+
+        return true;
     }
 
     /**
@@ -252,5 +270,13 @@ class LeaveService
     public function getMonthlyLeaves(): array
     {
         return $this->leaveModel->getMonthlyApprovedLeaves();
+    }
+
+    private function getUserName(int $userId): string
+    {
+        $stmt = $this->db->prepare("SELECT name FROM users WHERE id = ? LIMIT 1");
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row['name'] : 'Unknown';
     }
 }

@@ -135,4 +135,11 @@ return [
     ['PUT', '/api/office-locations/{id}', 'OfficeLocationController', 'update', ['c_level', 'hrd_manager']],
     ['DELETE', '/api/office-locations/{id}', 'OfficeLocationController', 'destroy', ['c_level', 'hrd_manager']],
 
+    // ----------------------------------------------------------------
+    // Notifications
+    // ----------------------------------------------------------------
+    ['GET', '/api/notifications',           'NotificationController', 'index',      ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['PUT', '/api/notifications/read-all',  'NotificationController', 'markAllRead',['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['PUT', '/api/notifications/{id}/read', 'NotificationController', 'markRead',   ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+
 ];
