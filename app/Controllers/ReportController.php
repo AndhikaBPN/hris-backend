@@ -68,6 +68,7 @@ class ReportController
         }
 
         $method = $type . 'Report';
+        $_GET['no_paginate'] = '1';
         $result = $this->service->$method($_GET, $authUser);
         $rows   = $result['data'] ?? [];
 
