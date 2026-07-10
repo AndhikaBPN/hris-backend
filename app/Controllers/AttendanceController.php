@@ -54,19 +54,19 @@ class AttendanceController
         }
     }
 
-    // GET /api/attendance/my?date=YYYY-MM-DD
+    // GET /api/attendance/my?date=&date_from=&date_to=&status=&page=&limit=
     public function my(): void
     {
         $authUser = $GLOBALS['auth_user'];
-        $date = $_GET['date'] ?? null;
+        $filters  = $_GET ?? [];
 
-        if ($date && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+        if (!empty($filters['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $filters['date'])) {
             ResponseHelper::error('Invalid date format. Use YYYY-MM-DD', 422);
             return;
         }
 
-        $data = $this->service->getMyToday((int) $authUser['id'], $date);
-        ResponseHelper::success($data, 'OK');
+        $result = $this->service->getHistory((int) $authUser['id'], $authUser['role'], $filters, 'own');
+        ResponseHelper::success($result['data'], 'OK', 200, $result['meta'] ?? null);
     }
 
     // GET /api/attendance

@@ -216,12 +216,6 @@ DELETE /api/office-locations/{id}    [c_level, hrd_manager]
 - Late = > 15 menit dari `shift.start_time`
 - Validation failure → record tetap INSERT dengan `status=invalid` + audit log ke `attendance_logs`
 
-### Shift Rotation (staff/team_leader)
-```
-2×Pagi → 2×Siang → 2×Malam → 2×Libur → repeat
-```
-Manager: shift tetap, Senin–Jumat.
-
 ### Leave Approval Chain
 - Staff/Team Leader → `hrd_manager` approves
 - hrd_manager/technical_manager → `c_level` approves
