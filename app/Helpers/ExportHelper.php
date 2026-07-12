@@ -87,8 +87,9 @@ class ExportHelper
         $html .= 'table.data tr:nth-child(even) td{background:#fdf5f5}';
         // Signature footer
         $html .= '.sig-wrap{width:100%;border-collapse:collapse;margin-top:30px}';
-        $html .= '.sig-cell{text-align:center;font-size:10px;width:200px;vertical-align:top}';
-        $html .= '.sig-name{font-weight:bold;font-size:11px;border-top:1px solid #000;padding-top:4px}';
+        $html .= '.sig-date{text-align:center;font-size:10px;width:200px;vertical-align:top;padding-bottom:70px}';
+        $html .= '.sig-name-cell{text-align:center;width:200px}';
+        $html .= '.sig-name{font-weight:bold;font-size:11px;border-top:1px solid #000;padding-top:4px;display:block}';
         $html .= '.sig-role{font-size:9px;color:#444}';
         $html .= '</style>';
 
@@ -125,17 +126,20 @@ class ExportHelper
 
         // ── Footer: tempat, tanggal, tanda tangan, nama ────────────────────────
         $html .= '<table class="sig-wrap">';
-        // Row 1: place & date
-        $html .= '<tr><td></td><td class="sig-cell">' . htmlspecialchars($place) . ', ' . $dateStr . '</td></tr>';
-        // Row 2: signature space (65px tall)
-        $html .= '<tr height="65"><td></td><td></td></tr>';
-        // Row 3: name underline
-        $html .= '<tr><td></td><td class="sig-cell">';
-        $html .= '<div class="sig-name">' . htmlspecialchars($signerName) . '</div>';
+        $html .= '<tr>';
+        $html .= '<td></td>';
+        $html .= '<td class="sig-date">' . htmlspecialchars($place) . ', ' . $dateStr . '</td>';
+        $html .= '</tr>';
+        $html .= '<tr>';
+        $html .= '<td></td>';
+        $html .= '<td class="sig-name-cell">';
+        $html .= '<span class="sig-name">' . htmlspecialchars($signerName) . '</span>';
         if ($signerRole) {
-            $html .= '<div class="sig-role">' . htmlspecialchars($signerRole) . '</div>';
+            $html .= '<br><span class="sig-role">' . htmlspecialchars($signerRole) . '</span>';
         }
-        $html .= '</td></tr></table>';
+        $html .= '</td>';
+        $html .= '</tr>';
+        $html .= '</table>';
 
         $mpdf = new \Mpdf\Mpdf([
             'orientation'   => 'L',
