@@ -89,8 +89,7 @@ class ExportHelper
         $html .= '.sig-wrap{width:100%;border-collapse:collapse;margin-top:30px}';
         $html .= '.sig-right{text-align:center;font-size:10px;width:200px}';
         $html .= '.sig-place{margin-bottom:4px;font-size:10px}';
-        $html .= '.sig-space{height:65px}';
-        $html .= '.sig-name{font-weight:bold;font-size:11px;border-top:1px solid #000;padding-top:4px}';
+        $html .= '.sig-name{font-weight:bold;font-size:11px;border-top:1px solid #000;padding-top:4px;margin-top:70px}';
         $html .= '.sig-role{font-size:9px;color:#444;margin-top:2px}';
         $html .= '</style>';
 
@@ -130,7 +129,6 @@ class ExportHelper
         $html .= '<td></td>';
         $html .= '<td class="sig-right">';
         $html .= '<div class="sig-place">' . htmlspecialchars($place) . ', ' . $dateStr . '</div>';
-        $html .= '<div class="sig-space"></div>';
         $html .= '<div class="sig-name">' . htmlspecialchars($signerName) . '</div>';
         if ($signerRole) {
             $html .= '<div class="sig-role">' . htmlspecialchars($signerRole) . '</div>';
