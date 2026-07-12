@@ -33,9 +33,10 @@ class AuthService
 
         // Generate JWT token
         $payload = [
-            'id' => $user['id'],
+            'id'   => $user['id'],
+            'name' => $user['name'],
             'email' => $user['email'],
-            'role' => $user['role']
+            'role' => $user['role'],
         ];
 
         $token = JwtHelper::generate($payload);

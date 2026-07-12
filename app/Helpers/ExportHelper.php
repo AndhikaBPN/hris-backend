@@ -68,41 +68,49 @@ class ExportHelper
 
         $html  = '<style>';
         $html .= 'body{font-family:Arial,sans-serif;font-size:10px;margin:0}';
-        $html .= '.kop-table{width:100%;border-collapse:collapse;margin-bottom:4px}';
-        $html .= '.kop-logo{width:70px;text-align:center;vertical-align:middle;padding-right:8px}';
-        $html .= '.kop-text{vertical-align:middle;text-align:center}';
-        $html .= '.company-name{font-size:16px;font-weight:bold;font-family:"Book Antiqua",Georgia,serif;letter-spacing:1px}';
-        $html .= '.company-addr{font-size:9px;margin-top:2px;color:#333}';
-        $html .= '.kop-line{border:0;border-top:3px solid #000;margin:4px 0 8px}';
-        $html .= '.report-title{text-align:center;font-size:13px;font-weight:bold;margin:6px 0 4px}';
+        // Kop surat — match DOCX layout: logo left, company text center
+        $html .= '.kop-wrap{width:100%;border-collapse:collapse;margin-bottom:0}';
+        $html .= '.kop-logo-cell{width:75px;text-align:left;vertical-align:middle;padding:0 10px 0 0}';
+        $html .= '.kop-text-cell{vertical-align:middle;text-align:center;padding:4px 0}';
+        $html .= '.company-name{font-size:18px;font-weight:bold;font-family:Georgia,serif;letter-spacing:2px;color:#000;line-height:1.2}';
+        $html .= '.company-addr{font-size:9px;margin-top:3px;color:#333;letter-spacing:0.3px}';
+        // Double bottom border matching DOCX kop surat style
+        $html .= '.kop-border-outer{border-top:3px solid #000;margin:6px 0 0}';
+        $html .= '.kop-border-inner{border-top:1px solid #000;margin:2px 0 8px}';
+        // Report section
+        $html .= '.report-title{text-align:center;font-size:13px;font-weight:bold;margin:6px 0 2px;text-transform:uppercase;letter-spacing:0.5px}';
         $html .= '.report-meta{text-align:center;font-size:8px;color:#666;margin-bottom:8px}';
+        // Data table
         $html .= 'table.data{border-collapse:collapse;width:100%}';
-        $html .= 'table.data th{background:#4472C4;color:#fff;padding:5px 8px;text-align:left;font-size:9px}';
-        $html .= 'table.data td{border:1px solid #ddd;padding:4px 8px;font-size:9px}';
-        $html .= 'table.data tr:nth-child(even) td{background:#f5f8ff}';
-        $html .= '.footer{margin-top:24px;width:100%}';
-        $html .= '.footer-right{text-align:right;font-size:10px}';
-        $html .= '.signer-box{display:inline-block;text-align:center;margin-top:4px;min-width:160px}';
-        $html .= '.signer-line{border-top:1px solid #000;margin-top:60px;padding-top:4px;font-size:10px;font-weight:bold}';
-        $html .= '.signer-role{font-size:9px;color:#444}';
+        $html .= 'table.data th{background:#722F37;color:#fff;padding:5px 8px;text-align:left;font-size:9px}';
+        $html .= 'table.data td{border:1px solid #ccc;padding:4px 8px;font-size:9px}';
+        $html .= 'table.data tr:nth-child(even) td{background:#fdf5f5}';
+        // Signature footer
+        $html .= '.sig-wrap{width:100%;border-collapse:collapse;margin-top:30px}';
+        $html .= '.sig-right{text-align:center;font-size:10px;width:200px}';
+        $html .= '.sig-place{margin-bottom:4px;font-size:10px}';
+        $html .= '.sig-space{height:65px}';
+        $html .= '.sig-name{font-weight:bold;font-size:11px;border-top:1px solid #000;padding-top:4px}';
+        $html .= '.sig-role{font-size:9px;color:#444;margin-top:2px}';
         $html .= '</style>';
 
-        // Kop surat
-        $html .= '<table class="kop-table"><tr>';
+        // ── Kop surat ──────────────────────────────────────────────────────────
+        $html .= '<table class="kop-wrap"><tr>';
         if ($logoSrc) {
-            $html .= '<td class="kop-logo"><img src="' . $logoSrc . '" width="60" height="60" /></td>';
+            $html .= '<td class="kop-logo-cell"><img src="' . $logoSrc . '" width="65" height="65" /></td>';
         }
-        $html .= '<td class="kop-text">';
+        $html .= '<td class="kop-text-cell">';
         $html .= '<div class="company-name">PT. YANG PENTING DULUPAJA</div>';
         $html .= '<div class="company-addr">Jl. Harapan I No. 35, Setu, Cipayung, Jakarta Timur, DKI Jakarta 13880</div>';
         $html .= '</td></tr></table>';
-        $html .= '<hr class="kop-line">';
+        $html .= '<div class="kop-border-outer"></div>';
+        $html .= '<div class="kop-border-inner"></div>';
 
-        // Title & meta
+        // ── Judul & meta ───────────────────────────────────────────────────────
         $html .= '<div class="report-title">' . htmlspecialchars($title) . '</div>';
-        $html .= '<div class="report-meta">Dicetak: ' . date('d/m/Y H:i') . ' &nbsp;|&nbsp; Jumlah data: ' . count($rows) . '</div>';
+        $html .= '<div class="report-meta">Dicetak: ' . date('d/m/Y H:i') . ' &nbsp;|&nbsp; Jumlah data: ' . count($rows) . ' baris</div>';
 
-        // Data table
+        // ── Data table ─────────────────────────────────────────────────────────
         $html .= '<table class="data"><thead><tr>';
         foreach ($headers as $h) {
             $html .= '<th>' . htmlspecialchars(self::formatHeader($h)) . '</th>';
@@ -117,15 +125,16 @@ class ExportHelper
         }
         $html .= '</tbody></table>';
 
-        // Footer: tempat, tanggal, nama
-        $html .= '<table class="footer"><tr><td width="60%"></td><td width="40%" class="footer-right">';
-        $html .= '<div>' . htmlspecialchars($place) . ', ' . $dateStr . '</div>';
-        $html .= '<div class="signer-box">';
-        $html .= '<div class="signer-line">' . htmlspecialchars($signerName) . '</div>';
+        // ── Footer: tempat, tanggal, tanda tangan, nama ────────────────────────
+        $html .= '<table class="sig-wrap"><tr>';
+        $html .= '<td></td>';
+        $html .= '<td class="sig-right">';
+        $html .= '<div class="sig-place">' . htmlspecialchars($place) . ', ' . $dateStr . '</div>';
+        $html .= '<div class="sig-space"></div>';
+        $html .= '<div class="sig-name">' . htmlspecialchars($signerName) . '</div>';
         if ($signerRole) {
-            $html .= '<div class="signer-role">' . htmlspecialchars($signerRole) . '</div>';
+            $html .= '<div class="sig-role">' . htmlspecialchars($signerRole) . '</div>';
         }
-        $html .= '</div>';
         $html .= '</td></tr></table>';
 
         $mpdf = new \Mpdf\Mpdf([

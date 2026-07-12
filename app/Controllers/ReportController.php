@@ -3,10 +3,12 @@
 class ReportController
 {
     private ReportService $service;
+    private PDO $db;
 
     public function __construct(PDO $db)
     {
         $this->service = new ReportService($db);
+        $this->db      = $db;
     }
 
     // GET /api/reports/attendance?year=&month=
@@ -92,9 +94,16 @@ class ReportController
                 'team_leader'       => 'Team Leader',
                 'staff'             => 'Staff',
             ];
+            // JWT payload may not carry name on old tokens — fallback to DB lookup
+            $signerName = $authUser['name'] ?? '';
+            if (empty($signerName) && !empty($authUser['id'])) {
+                $stmt = $this->db->prepare('SELECT name FROM users WHERE id = ? LIMIT 1');
+                $stmt->execute([$authUser['id']]);
+                $signerName = $stmt->fetchColumn() ?: '';
+            }
             $opts = [
                 'place'       => 'Jakarta',
-                'signer_name' => $authUser['name'] ?? '',
+                'signer_name' => $signerName,
                 'signer_role' => $roleMap[$authUser['role'] ?? ''] ?? ($authUser['role'] ?? ''),
             ];
             ExportHelper::pdf($filename, $titleMap[$type] ?? ucfirst($type) . ' Report', $rows, $opts);
