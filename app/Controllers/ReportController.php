@@ -67,7 +67,7 @@ class ReportController
             return;
         }
 
-        $method = $type . 'Report';
+        $method = "{$type}Report";
         $_GET['no_paginate'] = '1';
         $result = $this->service->$method($_GET, $authUser);
         $rows   = $result['data'] ?? [];
@@ -79,8 +79,25 @@ class ReportController
         if ($format === 'xlsx') {
             ExportHelper::xlsx($filename, $rows);
         } else {
-            $title = ucfirst($type) . ' Report';
-            ExportHelper::pdf($filename, $title, $rows);
+            $titleMap = [
+                'attendance' => 'Laporan Kehadiran Karyawan',
+                'leave'      => 'Laporan Cuti Karyawan',
+                'employees'  => 'Laporan Data Karyawan',
+                'shifts'     => 'Laporan Jadwal Shift',
+            ];
+            $roleMap = [
+                'c_level'           => 'Pimpinan / C-Level',
+                'hrd_manager'       => 'HRD Manager',
+                'technical_manager' => 'Technical Manager',
+                'team_leader'       => 'Team Leader',
+                'staff'             => 'Staff',
+            ];
+            $opts = [
+                'place'       => 'Jakarta',
+                'signer_name' => $authUser['name'] ?? '',
+                'signer_role' => $roleMap[$authUser['role'] ?? ''] ?? ($authUser['role'] ?? ''),
+            ];
+            ExportHelper::pdf($filename, $titleMap[$type] ?? ucfirst($type) . ' Report', $rows, $opts);
         }
     }
 }
