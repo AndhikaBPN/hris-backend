@@ -69,13 +69,17 @@ class ReportController
             return;
         }
 
+        // Build clean filter: keep all list-view params, strip export-only keys
+        $filters = $_GET;
+        unset($filters['format'], $filters['page'], $filters['limit']);
+        $filters['no_paginate'] = '1';
+
         $method = "{$type}Report";
-        $_GET['no_paginate'] = '1';
-        $result = $this->service->$method($_GET, $authUser);
+        $result = $this->service->$method($filters, $authUser);
         $rows   = $result['data'] ?? [];
 
-        $year     = $_GET['year']  ?? date('Y');
-        $month    = isset($_GET['month']) ? '_' . $_GET['month'] : '';
+        $year     = $filters['year']  ?? date('Y');
+        $month    = isset($filters['month']) ? '_' . $filters['month'] : '';
         $filename = "{$type}_{$year}{$month}.{$format}";
 
         if ($format === 'xlsx') {
