@@ -72,14 +72,14 @@ class ExportHelper
         $html .= '.kop-wrap{width:100%;border-collapse:collapse;margin-bottom:0}';
         $html .= '.kop-logo-cell{width:75px;text-align:left;vertical-align:middle;padding:0 10px 0 0}';
         $html .= '.kop-text-cell{vertical-align:middle;text-align:center;padding:4px 0}';
-        $html .= '.company-name{font-size:18px;font-weight:bold;font-family:Georgia,serif;letter-spacing:2px;color:#000;line-height:1.2}';
-        $html .= '.company-addr{font-size:9px;margin-top:3px;color:#333;letter-spacing:0.3px}';
+        $html .= '.company-name{font-size:22px;font-weight:bold;font-family:Georgia,serif;letter-spacing:2px;color:#000;line-height:1.2}';
+        $html .= '.company-addr{font-size:11px;margin-top:3px;color:#333;letter-spacing:0.3px}';
         // Double bottom border matching DOCX kop surat style
         $html .= '.kop-border-outer{border-top:3px solid #000;margin:6px 0 0}';
         $html .= '.kop-border-inner{border-top:1px solid #000;margin:2px 0 8px}';
         // Report section
-        $html .= '.report-title{text-align:center;font-size:13px;font-weight:bold;margin:6px 0 2px;text-transform:uppercase;letter-spacing:0.5px}';
-        $html .= '.report-meta{text-align:center;font-size:8px;color:#666;margin-bottom:8px}';
+        $html .= '.report-title{text-align:center;font-size:16px;font-weight:bold;margin:8px 0 3px;text-transform:uppercase;letter-spacing:0.5px}';
+        $html .= '.report-meta{text-align:center;font-size:11px;color:#666;margin-bottom:10px}';
         // Data table
         $html .= 'table.data{border-collapse:collapse;width:100%}';
         $html .= 'table.data th{background:#722F37;color:#fff;padding:5px 8px;text-align:left;font-size:9px}';
@@ -111,13 +111,18 @@ class ExportHelper
 
         // ── Data table ─────────────────────────────────────────────────────────
         $html .= '<table class="data"><thead><tr>';
+        $html .= '<th style="width:30px;text-align:center">No.</th>';
         foreach ($headers as $h) {
+            if ($h === 'user_id') continue;
             $html .= '<th>' . htmlspecialchars(self::formatHeader($h)) . '</th>';
         }
         $html .= '</tr></thead><tbody>';
+        $rowNum = 1;
         foreach ($rows as $row) {
             $html .= '<tr>';
-            foreach ($row as $val) {
+            $html .= '<td style="text-align:center">' . $rowNum++ . '</td>';
+            foreach ($row as $key => $val) {
+                if ($key === 'user_id') continue;
                 $html .= '<td>' . htmlspecialchars((string) ($val ?? '')) . '</td>';
             }
             $html .= '</tr>';
