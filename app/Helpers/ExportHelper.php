@@ -90,8 +90,8 @@ class ExportHelper
         $html .= '.sig-wrap{width:100%;border-collapse:collapse;margin-top:30px}';
         $html .= '.sig-date{text-align:center;font-size:12px;width:200px;vertical-align:top;padding-bottom:70px}';
         $html .= '.sig-name-cell{text-align:center;width:200px}';
-        $html .= '.sig-name{font-weight:bold;font-size:11px;border-top:1px solid #000;padding-top:4px;display:block}';
-        $html .= '.sig-role{font-size:9px;color:#444}';
+        $html .= '.sig-name{font-weight:bold;font-size:12px;border-top:1px solid #000;padding-top:4px;display:block}';
+        $html .= '.sig-role{font-size:12px;color:#444}';
         $html .= '</style>';
 
         // ── Kop surat ──────────────────────────────────────────────────────────
