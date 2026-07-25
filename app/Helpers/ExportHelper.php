@@ -64,7 +64,8 @@ class ExportHelper
 
         $monthsId = ['','Januari','Februari','Maret','April','Mei','Juni',
                      'Juli','Agustus','September','Oktober','November','Desember'];
-        $dateStr  = (int) date('d') . ' ' . $monthsId[(int) date('n')] . ' ' . date('Y');
+        $daysId   = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        $dateStr  = $daysId[(int) date('w')] . ' ' . (int) date('d') . ' ' . $monthsId[(int) date('n')] . ' ' . date('Y');
 
         $html  = '<style>';
         $html .= 'body{font-family:Arial,sans-serif;font-size:10px;margin:0}';
@@ -87,7 +88,7 @@ class ExportHelper
         $html .= 'table.data tr:nth-child(even) td{background:#fdf5f5}';
         // Signature footer
         $html .= '.sig-wrap{width:100%;border-collapse:collapse;margin-top:30px}';
-        $html .= '.sig-date{text-align:center;font-size:10px;width:200px;vertical-align:top;padding-bottom:70px}';
+        $html .= '.sig-date{text-align:center;font-size:12px;width:200px;vertical-align:top;padding-bottom:70px}';
         $html .= '.sig-name-cell{text-align:center;width:200px}';
         $html .= '.sig-name{font-weight:bold;font-size:11px;border-top:1px solid #000;padding-top:4px;display:block}';
         $html .= '.sig-role{font-size:9px;color:#444}';
