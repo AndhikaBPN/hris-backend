@@ -25,6 +25,11 @@ class ShiftScheduleService
         return $this->scheduleModel->getByUserId($userId, $filters);
     }
 
+    public function getMyMonthSchedules(int $userId, int $year, int $month, string $sorting = 'asc'): array
+    {
+        return $this->scheduleModel->getByUserAndMonth($userId, $year, $month, $sorting);
+    }
+
     public function getById(int $id): array
     {
         $schedule = $this->scheduleModel->findById($id);
@@ -420,6 +425,8 @@ class ShiftScheduleService
             'session'       => $session,
             'start_time'    => substr($sessionStart, 0, 5),
             'end_time'      => substr($schedule['end_time'], 0, 5),
+            'break_start'   => !empty($schedule['break_start']) ? substr($schedule['break_start'], 0, 5) : null,
+            'break_end'     => !empty($schedule['break_end'])   ? substr($schedule['break_end'],   0, 5) : null,
             'location'      => $officeName,
             'is_overnight'  => (bool) $schedule['is_overnight'],
             'minutes_until' => $minutesUntil,

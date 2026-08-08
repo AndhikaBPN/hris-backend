@@ -12,6 +12,7 @@ return [
     // Auth & Password Reset (public)
     // ----------------------------------------------------------------
     ['POST', '/api/login', 'AuthController', 'login', []],
+    ['POST', '/api/password/forgot', 'ProfileController', 'forgotPassword', []],
     ['POST', '/api/password/reset', 'ProfileController', 'resetPassword', []],
     ['POST', '/api/logout', 'AuthController', 'logout', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['POST', '/api/otp/send', 'OtpController', 'send', []],
@@ -55,6 +56,7 @@ return [
     ['POST', '/api/attendance/clock-in', 'AttendanceController', 'store', ['hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['POST', '/api/attendance/clock-out', 'AttendanceController', 'clockOut', ['hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/attendance/my', 'AttendanceController', 'my', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/attendance/{id}/detail', 'AttendanceController', 'detail', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/attendance', 'AttendanceController', 'index', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/attendance/today', 'AttendanceController', 'today', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/attendance/subordinates/today', 'AttendanceController', 'subordinatesToday', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader']],
@@ -86,6 +88,7 @@ return [
     // ----------------------------------------------------------------
     ['GET', '/api/shift-schedules/upcoming', 'ShiftScheduleController', 'upcoming', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/shift-schedules/my', 'ShiftScheduleController', 'my', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['GET', '/api/shift-schedules/my-schedules', 'ShiftScheduleController', 'mySchedules', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/shift-schedules', 'ShiftScheduleController', 'index', ['c_level', 'hrd_manager', 'technical_manager']],
     ['POST', '/api/shift-schedules/import', 'ShiftScheduleController', 'import', ['c_level', 'hrd_manager']],
     ['POST', '/api/shift-schedules/bulk', 'ShiftScheduleController', 'bulkStore', ['c_level', 'hrd_manager']],
@@ -123,6 +126,7 @@ return [
     ['GET', '/api/face-embeddings', 'FaceEmbeddingController', 'show', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['GET', '/api/face-embeddings/{id}', 'FaceEmbeddingController', 'showByUser', ['c_level', 'hrd_manager']],
     ['POST', '/api/face-embeddings', 'FaceEmbeddingController', 'store', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
+    ['POST', '/api/face-embeddings/{id}', 'FaceEmbeddingController', 'storeByUser', ['c_level', 'hrd_manager']],
     ['PUT', '/api/face-embeddings', 'FaceEmbeddingController', 'update', ['c_level', 'hrd_manager', 'technical_manager', 'team_leader', 'staff']],
     ['PUT', '/api/face-embeddings/{id}', 'FaceEmbeddingController', 'updateByUser', ['c_level', 'hrd_manager']],
 

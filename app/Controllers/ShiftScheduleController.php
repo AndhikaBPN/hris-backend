@@ -33,6 +33,19 @@ class ShiftScheduleController
         ResponseHelper::success($result['data'], 'OK', 200, $result['meta']);
     }
 
+    // GET /api/shift-schedules/my-schedules?year=&month=&sorting=asc|desc
+    // Calendar view — returns all schedules for the given month, no pagination.
+    public function mySchedules(): void
+    {
+        $authUser = $GLOBALS['auth_user'];
+        $year     = isset($_GET['year'])    ? (int) $_GET['year']          : (int) date('Y');
+        $month    = isset($_GET['month'])   ? (int) $_GET['month']         : (int) date('n');
+        $sorting  = isset($_GET['sorting']) ? (string) $_GET['sorting']    : 'asc';
+
+        $data = $this->service->getMyMonthSchedules((int) $authUser['id'], $year, $month, $sorting);
+        ResponseHelper::success($data, 'OK');
+    }
+
     // GET /api/shift-schedules
     public function index(): void
     {

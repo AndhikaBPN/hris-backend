@@ -71,13 +71,14 @@ class Attendance
 
         // Sorting
         $colMap = [
-            'id' => 'a.id',
+            'id'            => 'a.id',
+            'created_at'    => 'a.created_at',
             'check_in_time' => 'a.check_in_time',
-            'date' => 'ss.date',
-            'status' => 'a.status',
+            'date'          => 'ss.date',
+            'status'        => 'a.status',
         ];
-        $sortKey = $filters['order_by'] ?? 'check_in_time';
-        $sortCol = $colMap[$sortKey] ?? 'a.check_in_time';
+        $sortKey = $filters['order_by'] ?? 'created_at';
+        $sortCol = $colMap[$sortKey] ?? 'a.created_at';
         $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
         if (!in_array($sortDir, ['ASC', 'DESC']))
             $sortDir = 'DESC';
@@ -152,14 +153,15 @@ class Attendance
 
         // Sorting
         $colMap = [
-            'id' => 'a.id',
+            'id'            => 'a.id',
+            'created_at'    => 'a.created_at',
             'check_in_time' => 'a.check_in_time',
-            'date' => 'ss.date',
-            'name' => 'u.name',
-            'status' => 'a.status',
+            'date'          => 'ss.date',
+            'name'          => 'u.name',
+            'status'        => 'a.status',
         ];
-        $sortKey = $filters['order_by'] ?? 'check_in_time';
-        $sortCol = $colMap[$sortKey] ?? 'a.check_in_time';
+        $sortKey = $filters['order_by'] ?? 'created_at';
+        $sortCol = $colMap[$sortKey] ?? 'a.created_at';
         $sortDir = strtoupper($filters['sorting'] ?? 'DESC');
         if (!in_array($sortDir, ['ASC', 'DESC']))
             $sortDir = 'DESC';
@@ -185,16 +187,21 @@ class Attendance
         return $res['data'] ?? [];
     }
 
-    public function updateClockOut(int $attendanceId, string $clockOutTime): bool
+    public function updateClockOut(int $attendanceId, string $clockOutTime, ?string $checkoutFaceImage = null): bool
     {
         $stmt = $this->db->prepare("
             UPDATE attendance
-            SET check_out_time = :clock_out_time
+            SET check_out_time = :clock_out_time,
+                checkout_face_image = :checkout_face_image
             WHERE id = :id
             AND DATE(check_in_time) = CURDATE()
             AND check_out_time IS NULL
         ");
-        return $stmt->execute(['clock_out_time' => $clockOutTime, 'id' => $attendanceId]);
+        return $stmt->execute([
+            'clock_out_time'      => $clockOutTime,
+            'checkout_face_image' => $checkoutFaceImage,
+            'id'                  => $attendanceId,
+        ]);
     }
 
     /**
@@ -305,6 +312,32 @@ class Attendance
             'month_ref4' => $monthRef,
         ]);
 
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Fetch all sessions for a given shift_schedule_id.
+     * Returns raw rows ordered by session ASC (session 1 then 2).
+     */
+    public function getByShiftScheduleId(int $shiftScheduleId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT
+                a.id,
+                a.session,
+                a.face_image,
+                a.checkout_face_image,
+                a.latitude,
+                a.longitude,
+                a.distance_to_office,
+                a.status,
+                a.check_in_time,
+                a.check_out_time
+             FROM attendance a
+             WHERE a.shift_schedule_id = :ssid
+             ORDER BY a.session ASC"
+        );
+        $stmt->execute(['ssid' => $shiftScheduleId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

@@ -1,260 +1,258 @@
-# HRIS Attendance System (Web-Based)
+# HRIS Attendance System
 
-A web-based Human Resource Information System (HRIS) focused on employee attendance tracking using:
-
-- Face Recognition (biometric verification)
-- Geo-Tagging (location validation)
+Human Resource Information System untuk tracking kehadiran karyawan di **Gaming House** (live streaming), dengan verifikasi identitas via face recognition dan validasi lokasi via geo-tagging.
 
 ---
 
-## 📌 Overview
+## Tech Stack
 
-This application is designed to:
-- Prevent attendance fraud (fake presence / proxy attendance)
-- Verify user identity through facial recognition
-- Ensure user location is within the office radius
-
----
-
-## 🚀 Tech Stack
-
-### Backend
-- Native PHP (no framework)
-- REST API (JSON)
-- JWT Authentication
-
-### Frontend
-- HTML, CSS, Vanilla JavaScript
-
-### Database
-- MySQL
-
-### Face Recognition
-- face-api.js (client-side)
+| Layer | Teknologi |
+|-------|-----------|
+| Backend | Native PHP 8.x (no framework) |
+| Database | MySQL |
+| Auth | JWT (`firebase/php-jwt`) |
+| Email | PHPMailer (SMTP) |
+| Export | mPDF (PDF), PhpSpreadsheet (Excel) |
+| Face Recognition | face-api.js (client-side, 128-dim embedding) |
 
 ---
 
-## 📦 Features
+## Setup dari Awal
 
-### 🔐 Authentication
-- Login (JWT)
-- Logout
-- Token validation
+### 1. Clone & Install Dependencies
 
-### 👥 User Management
-- Create / Update / Delete user
-- Role management (admin, manager, staff)
-
-### 🕒 Attendance
-- Clock In (face + geo validation)
-- Clock Out (face validation)
-- Anti-fraud system
-
-### 📝 Leave Management
-- Submit leave requests
-- Approve / reject leave
-- Leave history
-
-### 📊 Dashboard
-- Admin: overall statistics
-- Manager: team overview
-- Staff: personal summary
-
-### 📄 Reporting
-- Attendance reports
-- Leave reports
-- Data Export (PDF / Excel)
-
----
-
-## 🧠 Core Logic
-
-### Face Recognition
-- Model: face-api.js
-- Output: 128-dimensional embedding vector
-- Matching: Euclidean Distance
-- Threshold:
-  - `< 0.5` → match
-  - `>= 0.5` → no match
-
-### Geo Validation
-- API: navigator.geolocation
-- Formula: Haversine
-- Threshold:
-  - ≤ 50 meters → valid
-  - > 50 meters → invalid
-
----
-
-## 🗄️ Database
-
-Main tables:
-- users
-- face_embeddings
-- attendance
-- leave_requests
-- office_locations
-- attendance_logs
-
----
-
-## ⚙️ Installation
-
-### 1. Clone Project
 ```bash
-git clone <your-repo-url>
-cd project-name
-```
-
-### 2. Install Dependencies
-```bash
+git clone <repo-url>
+cd hris-backend
 composer install
 ```
 
-### 3. Environment Setup
+### 2. Konfigurasi Environment
+
 ```bash
 cp .env.example .env
 ```
-Then edit as needed.
 
-### 4. Database Setup
-Run migrations:
+Edit `.env`:
+
+```env
+# Database
+DB_HOST=127.0.0.1
+DB_NAME=hris_db
+DB_USER=root
+DB_PASS=your_password
+
+# JWT
+JWT_SECRET=ganti_dengan_random_string_panjang
+JWT_TTL=86400
+
+# App
+APP_NAME=HRIS System
+APP_FRONTEND_URL=http://localhost:3000
+
+# SMTP (opsional — untuk OTP/reset password)
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USER=your@gmail.com
+MAIL_PASS=your_app_password
+MAIL_FROM=no-reply@hris.local
+MAIL_FROM_NAME=HRIS System
+```
+
+### 3. Buat Database
+
+```sql
+CREATE DATABASE hris_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+### 4. Jalankan Migrations
+
+Migrations otomatis dibaca dari `database/migrations/` secara urut alfanumerik.
+
 ```bash
 php migrate.php
 ```
 
-### 5. Run Project
-Using Composer script:
-```bash
-composer serve
+Output sukses:
+```
+[OK]   000_create_role.sql
+[OK]   000_create_team.sql
+[OK]   001_create_users.sql
+...
+[OK]   030_add_checkout_face_image_to_attendance.sql
+
+Done: 28 success, 0 failed.
 ```
 
-Or manually with PHP built-in server:
+### 5. Jalankan Seeder
+
+Seed semua data awal (roles, teams, shifts, office, users, jadwal Agustus 2026):
+
 ```bash
+mysql -u root -p hris_db < database/seed_all.sql
+```
+
+Data yang di-seed:
+
+| Data | Detail |
+|------|--------|
+| Roles | c_level, hrd_manager, technical_manager, team_leader, staff |
+| Teams | Alpha, Trojan, Eagle, Phoenix |
+| Shifts | Pagi (06–14), Siang (14–22), Malam (22–06), HRD (10–18), Technical (13–21) |
+| Office | Main Office, radius 100m |
+| Users | 12 user (lihat tabel di bawah) |
+| Leave Balances | Jul & Aug 2026, quota 1 hari/bulan |
+| Shift Schedules | Agustus 2026 penuh (rotasi otomatis per tim) |
+
+**Akun default (password semua: `password`):**
+
+| Email | Role | Tim |
+|-------|------|-----|
+| admin@hris.com | c_level | — |
+| budi.santoso@hris.com | hrd_manager | — |
+| andi.wirawan@hris.com | technical_manager | — |
+| reza.pratama@hris.com | team_leader | Alpha |
+| siti.rahma@hris.com | team_leader | Trojan |
+| doni.kurniawan@hris.com | team_leader | Eagle |
+| fajar.nugroho@hris.com | staff | Alpha |
+| maya.putri@hris.com | staff | Alpha |
+| rizky.hamdani@hris.com | staff | Trojan |
+| dewi.lestari@hris.com | staff | Trojan |
+| bagas.wicaksono@hris.com | staff | Eagle |
+| nadia.rahmawati@hris.com | staff | Eagle |
+
+### 6. Jalankan Server
+
+```bash
+composer serve
+# atau manual:
 php -S 127.0.0.1:8000 -t . index.php
 ```
 
-API will be available at:
+API tersedia di: `http://127.0.0.1:8000`
+
+---
+
+## Reset Database (Dev Only)
+
+Hapus semua tabel dan jalankan ulang dari awal:
+
 ```bash
-http://127.0.0.1:8000
+php db_reset.php
+php migrate.php
+mysql -u root -p hris_db < database/seed_all.sql
 ```
 
 ---
 
-## 🔐 Authentication Flow
-#### 1. User login → receive JWT
-#### 2. Token is stored on the client-side
-#### 3. API Requests using header:
-```bash
-Authorization: Bearer <token>
-```
-#### 4. Backend validates token
+## Struktur Project
 
-## 📂 Project Structure
-```bash
-├── app
-│   ├── Controllers
+```
+hris-backend/
+├── app/
+│   ├── Controllers/          # Thin — parse input, call service, return response
 │   │   ├── AttendanceController.php
 │   │   ├── AuthController.php
 │   │   ├── DashboardController.php
 │   │   ├── FaceEmbeddingController.php
+│   │   ├── LeaveBalanceController.php
 │   │   ├── LeaveController.php
+│   │   ├── NotificationController.php
+│   │   ├── OfficeLocationController.php
+│   │   ├── OtpController.php
 │   │   ├── ProfileController.php
 │   │   ├── ReportController.php
+│   │   ├── RoleController.php
 │   │   ├── ShiftController.php
+│   │   ├── ShiftScheduleController.php
+│   │   ├── TeamController.php
 │   │   └── UserController.php
-│   ├── Helpers
-│   │   ├── JwtHelper.php
-│   │   ├── ResponseHelper.php
-│   │   └── ValidationHelper.php
-│   ├── Middleware
-│   │   ├── AuthMiddleware.php
-│   │   └── RoleMiddleware.php
-│   ├── Models
-│   │   ├── Attendance.php
-│   │   ├── AttendanceLog.php
-│   │   ├── FaceEmbedding.php
-│   │   ├── LeaveBalance.php
-│   │   ├── LeaveRequest.php
-│   │   ├── OfficeLocation.php
-│   │   ├── PasswordReset.php
-│   │   ├── Shift.php
-│   │   ├── ShiftSchedule.php
-│   │   ├── TokenBlacklist.php
-│   │   └── User.php
-│   └── Services
-│       ├── AttendanceService.php
-│       ├── AuthService.php
-│       ├── DashboardService.php
-│       ├── FaceEmbeddingService.php
-│       ├── LeaveService.php
-│       ├── ProfileService.php
-│       ├── ReportService.php
-│       ├── ShiftService.php
-│       └── UserService.php
-├── config
-│   └── database.php
-├── database
-│   └── migrations
-│       ├── 001_create_users.sql
-│       ├── 002_create_face_embeddings.sql
-│       ├── 003_create_office_locations.sql
-│       ├── 004_create_shifts.sql
-│       ├── 005_create_shift_schedules.sql
-│       ├── 006_create_attendance.sql
-│       ├── 007_create_attendance_logs.sql
-│       ├── 008_create_leave_requests.sql
-│       ├── 009_create_leave_balances.sql
-│       ├── 010_create_indexes.sql
-│       ├── 011_seed_shifts.sql
-│       ├── 012_seed_superadmin.sql
-│       ├── 013_create_password_resets.sql
-│       └── 014_create_token_blacklists.sql
-├── docs
-│   ├── flow.md
-│   ├── hris.md
-│   ├── hris_architecture_v2.md
-│   └── uml_diagrams.md
-├── routes
-│   └── api.php
+│   ├── Services/             # Thick — semua business logic di sini
+│   ├── Models/               # Pure DAO — PDO prepared statements only
+│   └── Helpers/              # JwtHelper, ResponseHelper, ValidationHelper, ExportHelper
+│   └── Middleware/           # AuthMiddleware (JWT), RoleMiddleware (RBAC)
+├── config/
+│   └── database.php          # PDO connection
+├── database/
+│   ├── migrations/           # SQL migrations (dijalankan urut oleh migrate.php)
+│   └── seed_all.sql          # Master seeder (jalankan manual setelah migrate)
+├── docs/                     # Dokumentasi arsitektur, flow, PRD
+├── routes/
+│   └── api.php               # Route table: method + path + roles
 ├── .env.example
-├── .gitignore
-├── README.md
-├── bootstrap.php
+├── bootstrap.php             # Autoloader + env loader
 ├── composer.json
-├── db_reset.php
-├── index.php
-├── launch.json
-├── migrate.php
-└── router.php
+├── db_reset.php              # Reset DB (dev only)
+├── index.php                 # Front controller + CORS
+└── migrate.php               # Migration runner
 ```
 
 ---
 
-## ⚠️ Constraints
-- No framework (Laravel, etc.)
-- No ML training
-- Use pre-trained models only
-- Lightweight architecture
+## Core Business Logic
+
+### Attendance (Session-Based)
+- **Session 1** = clock-in awal shift
+- **Session 2** = clock-in setelah break (jika shift punya `break_end`)
+- **Manager** = session 1 + `check_out_time` (clock-out wajib)
+- **Staff/TL** = session 1 & 2, tidak ada clock-out
+- Late jika > 15 menit dari `start_time` (session 1) atau `break_end` (session 2)
+- Gagal validasi → tetap INSERT dengan `status=invalid` + audit ke `attendance_logs`
+
+### Face Recognition
+- Input: 128-dimensional embedding vector dari face-api.js
+- Matching: Euclidean Distance < `0.5` → match
+
+### Geo Validation
+- Formula: Haversine
+- Radius: ≤ 100 meter dari kantor → valid
+
+### Leave Approval Chain
+- Staff / Team Leader → disetujui HRD Manager
+- HRD Manager / Technical Manager → disetujui C-Level
+
+### Shift Rotation (Staff & Team Leader)
+- Siklus 8 hari: `2 Pagi → 2 Siang → 2 Malam → 2 Off`
+- Manager: shift tetap Senin–Jumat
 
 ---
 
-## 🧠 Methods Used
-- Face Recognition (Deep Learning-based)
-- Feature Extraction (Face Embedding)
-- Euclidean Distance (similarity)
-- Haversine Formula (geo distance)
-- RBAC (Role-Based Access Control)
+## RBAC Roles
+
+| Role | Shift | Approval |
+|------|-------|----------|
+| `c_level` | — (tidak absen) | Menyetujui cuti HRD/Technical Manager |
+| `hrd_manager` | HRD (10–18, Mon–Fri) | Menyetujui cuti Staff/TL |
+| `technical_manager` | Technical (13–21, Mon–Fri) | Disetujui c_level |
+| `team_leader` | Rotasi | Disetujui hrd_manager |
+| `staff` | Rotasi | Disetujui hrd_manager |
 
 ---
 
-## 📌 Future Improvements
-- Anti-spoofing (blink detection)
-- GPS spoof detection
-- Mobile support
-- Real-time monitoring
+## Authentication
+
+```
+POST /api/login  →  JWT token (valid JWT_TTL detik)
+
+Authorization: Bearer <token>
+```
+
+Logout memasukkan token ke `token_blacklists` (stateless revocation).
 
 ---
 
-👨‍💻 **Author**
-- Andhika
+## Commands Ringkas
+
+```bash
+composer install          # Install PHP dependencies
+cp .env.example .env      # Setup environment
+php migrate.php           # Jalankan semua migrations
+mysql -u root -p hris_db < database/seed_all.sql  # Seed data
+composer serve            # Start server http://127.0.0.1:8000
+php db_reset.php          # Reset DB (dev only)
+composer test             # Jalankan test suite
+```
+
+---
+
+👨‍💻 **Author:** Andhika

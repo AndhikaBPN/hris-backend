@@ -136,6 +136,44 @@ class ShiftSchedule
         return $this->all($filters);
     }
 
+    /**
+     * Calendar view: all schedules for a user in a given month, no pagination.
+     * Returns compact fields sufficient for shift-type icon rendering.
+     */
+    /**
+     * Calendar view: all schedules for a user in a given month, no pagination.
+     * Returns compact fields sufficient for shift-type icon rendering.
+     *
+     * @param string $sorting 'asc'|'desc' — order by date
+     */
+    public function getByUserAndMonth(int $userId, int $year, int $month, string $sorting = 'asc'): array
+    {
+        $dir  = strtoupper($sorting) === 'DESC' ? 'DESC' : 'ASC';
+        $stmt = $this->db->prepare(
+            "SELECT
+                ss.id,
+                ss.date,
+                ss.is_day_off,
+                ss.notes,
+                s.name       AS shift_name,
+                s.start_time,
+                s.end_time,
+                s.is_overnight
+             FROM shift_schedules ss
+             LEFT JOIN shifts s ON ss.shift_id = s.id
+             WHERE ss.user_id = :user_id
+               AND YEAR(ss.date)  = :year
+               AND MONTH(ss.date) = :month
+             ORDER BY ss.date $dir"
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'year'    => $year,
+            'month'   => $month,
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function create(int $userId, array $data): bool
     {
         $sql = "INSERT INTO shift_schedules (user_id, shift_id, date, is_day_off, created_by, notes)

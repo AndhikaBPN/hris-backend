@@ -68,30 +68,30 @@ class ExportHelper
         $dateStr  = $daysId[(int) date('w')] . ' ' . (int) date('d') . ' ' . $monthsId[(int) date('n')] . ' ' . date('Y');
 
         $html  = '<style>';
-        $html .= 'body{font-family:Arial,sans-serif;font-size:10px;margin:0}';
+        $html .= 'body{font-family:"Times New Roman",Times,serif;font-size:10px;margin:0;color:#000}';
         // Kop surat — match DOCX layout: logo left, company text center
         $html .= '.kop-wrap{width:100%;border-collapse:collapse;margin-bottom:0}';
         $html .= '.kop-logo-cell{width:75px;text-align:left;vertical-align:middle;padding:0 10px 0 0}';
         $html .= '.kop-text-cell{vertical-align:middle;text-align:center;padding:4px 0}';
-        $html .= '.company-name{font-size:22px;font-weight:bold;font-family:Georgia,serif;letter-spacing:2px;color:#000;line-height:1.2}';
-        $html .= '.company-addr{font-size:11px;margin-top:3px;color:#333;letter-spacing:0.3px}';
+        $html .= '.company-name{font-size:22px;font-weight:bold;font-family:"Times New Roman",Times,serif;letter-spacing:2px;color:#000;line-height:1.2}';
+        $html .= '.company-addr{font-size:11px;margin-top:3px;color:#000;letter-spacing:0.3px}';
         // Double bottom border matching DOCX kop surat style
         $html .= '.kop-border-outer{border-top:3px solid #000;margin:6px 0 0}';
         $html .= '.kop-border-inner{border-top:1px solid #000;margin:2px 0 8px}';
         // Report section
-        $html .= '.report-title{text-align:center;font-size:16px;font-weight:bold;margin:8px 0 3px;text-transform:uppercase;letter-spacing:0.5px}';
-        $html .= '.report-meta{text-align:center;font-size:11px;color:#666;margin-bottom:10px}';
+        $html .= '.report-title{text-align:center;font-size:16px;font-weight:bold;margin:8px 0 3px;text-transform:uppercase;letter-spacing:0.5px;color:#000}';
+        $html .= '.report-meta{text-align:center;font-size:11px;color:#000;margin-bottom:10px}';
         // Data table
         $html .= 'table.data{border-collapse:collapse;width:100%}';
-        $html .= 'table.data th{background:#722F37;color:#fff;padding:5px 8px;text-align:left;font-size:9px}';
-        $html .= 'table.data td{border:1px solid #ccc;padding:4px 8px;font-size:9px}';
-        $html .= 'table.data tr:nth-child(even) td{background:#fdf5f5}';
+        $html .= 'table.data th{border-bottom:2px solid #000;border-top:2px solid #000;padding:5px 8px;text-align:left;font-size:9px;color:#000;background:#fff;font-weight:bold}';
+        $html .= 'table.data td{border-bottom:1px solid #ddd;padding:4px 8px;font-size:9px;color:#000}';
+        $html .= 'table.data tr:nth-child(even) td{background:#f5f5f5}';
         // Signature footer
         $html .= '.sig-wrap{width:100%;border-collapse:collapse;margin-top:30px}';
-        $html .= '.sig-date{text-align:center;font-size:12px;width:200px;vertical-align:top;padding-bottom:70px}';
+        $html .= '.sig-date{text-align:center;font-size:14px;width:200px;vertical-align:top;padding-bottom:70px;color:#000}';
         $html .= '.sig-name-cell{text-align:center;width:200px}';
-        $html .= '.sig-name{font-weight:bold;font-size:12px;border-top:1px solid #000;padding-top:4px;display:block}';
-        $html .= '.sig-role{font-size:12px;color:#444}';
+        $html .= '.sig-name{font-weight:bold;font-size:14px;border-top:1px solid #000;padding-top:4px;display:block;color:#000}';
+        $html .= '.sig-role{font-size:14px;color:#000}';
         $html .= '</style>';
 
         // ── Kop surat ──────────────────────────────────────────────────────────

@@ -234,7 +234,7 @@ DELETE /api/office-locations/{id}    [c_level, hrd_manager]
 | Parameter | Value |
 |-----------|-------|
 | Face match | Euclidean distance < 0.5 |
-| Geo radius | ≤ 50 meters (Haversine) |
+| Geo radius | ≤ 100 meters (Haversine) |
 | Late threshold | > 15 menit dari shift start_time |
 | JWT TTL | env `JWT_TTL` (default 86400 = 24h) |
 | OTP TTL | 15 menit, single-use |

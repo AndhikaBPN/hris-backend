@@ -44,13 +44,28 @@ class AttendanceController
     // POST /api/attendance/clock-out
     public function clockOut(): void
     {
-        $authUser = $GLOBALS['auth_user'];
+        $authUser  = $GLOBALS['auth_user'];
+        $body      = $this->json();
+        $faceImage = $body['face_image'] ?? null;
 
         try {
-            $result = $this->service->clockOut((int) $authUser['id']);
+            $result = $this->service->clockOut((int) $authUser['id'], $faceImage ?: null);
             ResponseHelper::success($result, 'Clock-out recorded successfully');
         } catch (\RuntimeException $e) {
             ResponseHelper::error($e->getMessage(), 400);
+        }
+    }
+
+    // GET /api/attendance/{shift_schedule_id}/detail
+    public function detail(string $shiftScheduleId): void
+    {
+        try {
+            $data = $this->service->getDetailBySchedule((int) $shiftScheduleId);
+            ResponseHelper::success($data, 'Attendance detail fetched successfully');
+        } catch (\InvalidArgumentException $e) {
+            ResponseHelper::error($e->getMessage(), 404);
+        } catch (\RuntimeException $e) {
+            ResponseHelper::error($e->getMessage(), 403);
         }
     }
 

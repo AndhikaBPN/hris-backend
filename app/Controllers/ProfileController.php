@@ -45,6 +45,26 @@ class ProfileController
         }
     }
 
+    // POST /api/password/forgot  — send OTP with correct 'reset_password' type
+    public function forgotPassword(): void
+    {
+        $body  = $this->json();
+        $email = trim($body['email'] ?? '');
+
+        if (!$email) {
+            ResponseHelper::error('Email is required', 422);
+            return;
+        }
+
+        try {
+            $this->service->requestOtp($email);
+            // Always respond success to prevent user enumeration
+            ResponseHelper::success(null, 'If the email is registered, an OTP has been sent.');
+        } catch (\Exception $e) {
+            ResponseHelper::error($e->getMessage(), 400);
+        }
+    }
+
     // POST /api/password/reset
     public function resetPassword(): void
     {

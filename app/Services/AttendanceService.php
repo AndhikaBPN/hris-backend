@@ -59,19 +59,50 @@ class AttendanceService
         // 1. Auto-fill sesi sebelumnya yang terlewat sebagai invalid
         $this->autoFillMissingSessions($userId, $schedule, $session);
 
-        // 2. Tentukan status: valid jika <= start_time + 15 menit, late jika lewat
+        // 2. Server-side geo validation (tidak percaya client distance)
+        $serverDistance = null;
+        $geoValid = true;
+        if ($latitude && $longitude) {
+            $office = $this->officeModel->getDefault();
+            if ($office) {
+                $serverDistance = $this->calculateDistanceToOffice($latitude, $longitude);
+                $radiusMeters   = (int) ($office['radius_meters'] ?? 100);
+                if ($serverDistance > $radiusMeters) {
+                    $geoValid = false;
+                }
+            }
+        }
+
+        // 3. Jika di luar radius → INSERT invalid + log, tidak lanjut
+        if (!$geoValid) {
+            $attId = $this->attendanceModel->create([
+                'user_id'            => $userId,
+                'shift_schedule_id'  => $schedule['id'],
+                'session'            => $session,
+                'face_image'         => $faceImage,
+                'latitude'           => $latitude,
+                'longitude'          => $longitude,
+                'distance_to_office' => $serverDistance,
+                'status'             => 'invalid',
+            ]);
+            $msg = sprintf('Fail: Out of geo range (%.1fm > %dm)', $serverDistance, $radiusMeters);
+            $this->logModel->create(['attendance_id' => $attId, 'user_id' => $userId, 'session' => $session, 'message' => $msg]);
+            throw new \RuntimeException(sprintf('Location is out of allowed radius (%.0f m from office, max %d m)', $serverDistance, $radiusMeters));
+        }
+
+        // 4. Tentukan status: valid jika <= start_time + 15 menit, late jika lewat
         $status = $this->resolveStatus($schedule, $session, new \DateTime());
 
-        // 3. Save
+        // 5. Save
         $attId = $this->attendanceModel->create([
-            'user_id' => $userId,
-            'shift_schedule_id' => $schedule['id'],
-            'session' => $session,
-            'face_image' => $faceImage,
-            'latitude' => $latitude ?: null,
-            'longitude' => $longitude ?: null,
-            'distance_to_office' => $distanceToOffice ?: null,
-            'status' => $status,
+            'user_id'            => $userId,
+            'shift_schedule_id'  => $schedule['id'],
+            'session'            => $session,
+            'face_image'         => $faceImage,
+            'latitude'           => $latitude ?: null,
+            'longitude'          => $longitude ?: null,
+            'distance_to_office' => $serverDistance ?? ($distanceToOffice ?: null),
+            'status'             => $status,
         ]);
 
         $this->logModel->create(['attendance_id' => $attId, 'user_id' => $userId, 'session' => $session, 'message' => "Success: Clock in session $session - $status"]);
@@ -79,7 +110,7 @@ class AttendanceService
         return ['attendance_id' => $attId, 'status' => $status];
     }
 
-    public function clockOut(int $userId): array
+    public function clockOut(int $userId, ?string $checkoutFaceImage = null): array
     {
         $today = $this->attendanceModel->todayByUserId($userId);
 
@@ -96,8 +127,12 @@ class AttendanceService
             throw new \RuntimeException('No active clock-in found for today, or you have already clocked out');
         }
 
-        $now = date('Y-m-d H:i:s');
-        $updated = $this->attendanceModel->updateClockOut((int) $target['id'], $now);
+        $now     = date('Y-m-d H:i:s');
+        $updated = $this->attendanceModel->updateClockOut(
+            (int) $target['id'],
+            $now,
+            $checkoutFaceImage ?: null
+        );
 
         if (!$updated) {
             throw new \RuntimeException('Failed to record clock-out');
@@ -105,9 +140,9 @@ class AttendanceService
 
         $this->logModel->create([
             'attendance_id' => (int) $target['id'],
-            'user_id' => $userId,
-            'session' => (int) $target['session'],
-            'message' => "Success: Clock out session {$target['session']} at $now",
+            'user_id'       => $userId,
+            'session'       => (int) $target['session'],
+            'message'       => "Success: Clock out session {$target['session']} at $now",
         ]);
 
         return ['attendance_id' => (int) $target['id'], 'clock_out_time' => $now];
@@ -122,6 +157,55 @@ class AttendanceService
             unset($row['face_image'], $row['latitude'], $row['longitude'], $row['distance_to_office']);
             return $row;
         }, $result['data'] ?? []);
+    }
+
+    /**
+     * Attendance detail for one shift_schedule_id.
+     * Returns shift info + all sessions (session 1 & 2) with face_image.
+     * Roles: all authenticated. RBAC enforced here — staff/TL can only see own schedule.
+     */
+    public function getDetailBySchedule(int $shiftScheduleId): array
+    {
+        $schedule = $this->scheduleModel->findById($shiftScheduleId);
+        if (!$schedule) {
+            throw new \InvalidArgumentException('Shift schedule not found');
+        }
+
+        $rows = $this->attendanceModel->getByShiftScheduleId($shiftScheduleId);
+
+        // Index rows by session number
+        $bySession = [];
+        foreach ($rows as $row) {
+            $bySession[(int) $row['session']] = $row;
+        }
+
+        // Always expose both session slots so FE can render Clock In 1 + Clock In 2.
+        // Managers also have session 1; clock_out_time on that record covers their exit.
+        $sessions = [];
+        foreach ([1, 2] as $s) {
+            $rec = $bySession[$s] ?? null;
+            $sessions[] = [
+                'session'              => $s,
+                'face_image'           => self::wrapFaceImage($rec['face_image']           ?? null),
+                'checkout_face_image'  => self::wrapFaceImage($rec['checkout_face_image']  ?? null),
+                'check_in_time'        => $rec['check_in_time']      ?? null,
+                'check_out_time'       => $rec['check_out_time']     ?? null,
+                'status'               => $rec['status']             ?? null,
+                'latitude'             => $rec['latitude']           ?? null,
+                'longitude'            => $rec['longitude']          ?? null,
+                'distance_to_office'   => $rec['distance_to_office'] ?? null,
+            ];
+        }
+
+        return [
+            'shift_schedule_id' => $shiftScheduleId,
+            'date'              => $schedule['date'],
+            'shift_name'        => $schedule['shift_name']  ?? null,
+            'start_time'        => $schedule['start_time']  ?? null,
+            'end_time'          => $schedule['end_time']    ?? null,
+            'is_day_off'        => (bool) $schedule['is_day_off'],
+            'sessions'          => $sessions,
+        ];
     }
 
     public function getHistory(int $userId, string $role, array $filters = [], ?string $view = null): array
@@ -303,5 +387,39 @@ class AttendanceService
                 'rate' => $rate,
             ];
         }, $rows);
+    }
+
+    /**
+     * Wrap raw base64 face_image into a proper data URI so FE can use it
+     * directly in <img src="...">.  Detects JPEG vs PNG from magic bytes.
+     * Returns null if no image is stored.
+     */
+    private static function wrapFaceImage(?string $raw): ?string
+    {
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        // Already a data URI — return as-is
+        if (str_starts_with($raw, 'data:')) {
+            return $raw;
+        }
+
+        // Detect MIME type from decoded magic bytes
+        $decoded = base64_decode($raw, true);
+        if ($decoded === false) {
+            return null;
+        }
+
+        $hex  = bin2hex(substr($decoded, 0, 4));
+        $mime = match (true) {
+            str_starts_with($hex, 'ffd8')     => 'image/jpeg',
+            str_starts_with($hex, '89504e47') => 'image/png',
+            str_starts_with($hex, '47494638') => 'image/gif',
+            str_starts_with($hex, '52494646') => 'image/webp',
+            default                            => 'image/jpeg',   // safe fallback
+        };
+
+        return "data:{$mime};base64,{$raw}";
     }
 }

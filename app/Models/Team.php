@@ -41,7 +41,7 @@ class Team
             $sortDir = 'DESC';
 
         $sqlData = "SELECT t.*, u.name as team_lead_name,
-                           (SELECT COUNT(*) FROM users WHERE team_id = t.id) as total_member
+                           (SELECT COUNT(*) FROM users WHERE team_id = t.id AND is_active = 1) as total_member
                     FROM team t
                     LEFT JOIN users u ON t.team_lead_id = u.id
                     WHERE 1=1";
@@ -100,17 +100,11 @@ class Team
         ]);
     }
 
-    public function isUsedByUsers(int $id): bool
+    public function hasMembers(int $id): bool
     {
-        $members = $this->db->prepare("SELECT COUNT(*) as total FROM users WHERE team_id = :id LIMIT 1");
-        $members->execute(['id' => $id]);
-        if ((int) $members->fetch(PDO::FETCH_ASSOC)['total'] > 0) {
-            return true;
-        }
-
-        $leader = $this->db->prepare("SELECT COUNT(*) as total FROM team WHERE id = :id AND team_lead_id IS NOT NULL LIMIT 1");
-        $leader->execute(['id' => $id]);
-        return (int) $leader->fetch(PDO::FETCH_ASSOC)['total'] > 0;
+        $stmt = $this->db->prepare("SELECT COUNT(*) as total FROM users WHERE team_id = :id AND is_active = 1 LIMIT 1");
+        $stmt->execute(['id' => $id]);
+        return (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'] > 0;
     }
 
     public function delete(int $id): bool
@@ -132,7 +126,7 @@ class Team
             SELECT u.id, u.name, u.email, u.created_at, u.role_id, r.role as role_name
             FROM users u
             LEFT JOIN `role` r ON u.role_id = r.id
-            WHERE u.team_id = :team_id AND u.role_id = 5 AND u.is_active = 1
+            WHERE u.team_id = :team_id AND u.is_active = 1
             ORDER BY u.name ASC
         ");
         $stmt->execute(['team_id' => $teamId]);
