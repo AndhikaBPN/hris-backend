@@ -111,11 +111,24 @@ class ExportHelper
         $html .= '<div class="report-meta">Dicetak: ' . date('d/m/Y H:i') . ' &nbsp;|&nbsp; Jumlah data: ' . count($rows) . ' baris</div>';
 
         // ── Data table ─────────────────────────────────────────────────────────
+        $withPhotos = !empty($opts['with_photos']);
+
+        // Add narrow column style for image columns when with_photos = true
+        if ($withPhotos) {
+            $html .= '<style>';
+            $html .= 'table.data td.img-cell{padding:2px 4px;text-align:center;width:70px}';
+            $html .= 'table.data td.img-cell img{width:60px;height:60px;object-fit:cover;border-radius:4px}';
+            $html .= 'table.data td.img-cell span{font-size:8px;color:#999}';
+            $html .= '</style>';
+        }
+
         $html .= '<table class="data"><thead><tr>';
         $html .= '<th style="width:30px;text-align:center">No.</th>';
         foreach ($headers as $h) {
             if ($h === 'user_id') continue;
-            $html .= '<th>' . htmlspecialchars(self::formatHeader($h)) . '</th>';
+            $isImg = $withPhotos && str_ends_with($h, '_image');
+            $thStyle = $isImg ? ' style="width:70px;text-align:center"' : '';
+            $html .= '<th' . $thStyle . '>' . htmlspecialchars(self::formatHeader($h)) . '</th>';
         }
         $html .= '</tr></thead><tbody>';
         $rowNum = 1;
@@ -124,7 +137,18 @@ class ExportHelper
             $html .= '<td style="text-align:center">' . $rowNum++ . '</td>';
             foreach ($row as $key => $val) {
                 if ($key === 'user_id') continue;
-                $html .= '<td>' . htmlspecialchars((string) ($val ?? '')) . '</td>';
+                $isImg = $withPhotos && str_ends_with($key, '_image');
+                if ($isImg) {
+                    $html .= '<td class="img-cell">';
+                    if ($val !== null && str_starts_with((string) $val, 'data:')) {
+                        $html .= '<img src="' . $val . '" />';
+                    } else {
+                        $html .= '<span>—</span>';
+                    }
+                    $html .= '</td>';
+                } else {
+                    $html .= '<td>' . htmlspecialchars((string) ($val ?? '')) . '</td>';
+                }
             }
             $html .= '</tr>';
         }

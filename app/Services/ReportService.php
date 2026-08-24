@@ -102,6 +102,125 @@ class ReportService
     }
 
     // ----------------------------------------------------------------
+    // Attendance Detail Export (per-session, with face_image + coords)
+    // Used for PDF export with role=staff|manager param.
+    // ----------------------------------------------------------------
+
+    public function attendanceDetailReport(array $filters, string $roleGroup): array
+    {
+        $year  = (int) ($filters['year']  ?? date('Y'));
+        $month = (int) ($filters['month'] ?? date('n'));
+
+        if ($roleGroup === 'manager') {
+            $roles = ['hrd_manager', 'technical_manager'];
+        } else {
+            $roles = ['staff', 'team_leader'];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($roles), '?'));
+        $params = array_merge($roles, [$year, $month]);
+
+        if ($roleGroup === 'manager') {
+            // Manager: 1 row per schedule — clock-in + clock-out dari session 1
+            $sql = "
+                SELECT
+                    ss.date                                 AS tanggal,
+                    u.name                                  AS nama,
+                    s.name                                  AS shift,
+                    a1.check_in_time                        AS clock_in_time,
+                    a1.status                               AS clock_in_status,
+                    a1.face_image                           AS clock_in_image,
+                    CASE
+                        WHEN a1.latitude IS NOT NULL AND a1.longitude IS NOT NULL
+                        THEN CONCAT(ROUND(a1.latitude,6), ', ', ROUND(a1.longitude,6))
+                        ELSE NULL
+                    END                                     AS clock_in_coordinate,
+                    a1.check_out_time                       AS clock_out_time,
+                    a1.checkout_face_image                  AS clock_out_image
+                FROM shift_schedules ss
+                JOIN users u ON u.id = ss.user_id
+                JOIN role r ON r.id = u.role_id
+                LEFT JOIN shifts s ON s.id = ss.shift_id
+                LEFT JOIN attendance a1 ON a1.shift_schedule_id = ss.id AND a1.session = 1
+                WHERE r.role IN ($placeholders)
+                  AND YEAR(ss.date) = ? AND MONTH(ss.date) = ?
+                  AND ss.is_day_off = 0
+                ORDER BY ss.date, u.name
+            ";
+        } else {
+            // Staff/TL: 1 row per schedule — session 1 & session 2
+            $sql = "
+                SELECT
+                    ss.date                                 AS tanggal,
+                    u.name                                  AS nama,
+                    s.name                                  AS shift,
+                    a1.check_in_time                        AS sesi1_waktu,
+                    a1.status                               AS sesi1_status,
+                    a1.face_image                           AS sesi1_image,
+                    CASE
+                        WHEN a1.latitude IS NOT NULL AND a1.longitude IS NOT NULL
+                        THEN CONCAT(ROUND(a1.latitude,6), ', ', ROUND(a1.longitude,6))
+                        ELSE NULL
+                    END                                     AS sesi1_koordinat,
+                    a2.check_in_time                        AS sesi2_waktu,
+                    a2.status                               AS sesi2_status,
+                    a2.face_image                           AS sesi2_image,
+                    CASE
+                        WHEN a2.latitude IS NOT NULL AND a2.longitude IS NOT NULL
+                        THEN CONCAT(ROUND(a2.latitude,6), ', ', ROUND(a2.longitude,6))
+                        ELSE NULL
+                    END                                     AS sesi2_koordinat
+                FROM shift_schedules ss
+                JOIN users u ON u.id = ss.user_id
+                JOIN role r ON r.id = u.role_id
+                LEFT JOIN shifts s ON s.id = ss.shift_id
+                LEFT JOIN attendance a1 ON a1.shift_schedule_id = ss.id AND a1.session = 1
+                LEFT JOIN attendance a2 ON a2.shift_schedule_id = ss.id AND a2.session = 2
+                WHERE r.role IN ($placeholders)
+                  AND YEAR(ss.date) = ? AND MONTH(ss.date) = ?
+                  AND ss.is_day_off = 0
+                ORDER BY ss.date, u.name
+            ";
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Wrap raw base64 face images as data URIs
+        foreach ($rows as &$row) {
+            foreach ($row as $key => &$val) {
+                if (str_ends_with($key, '_image') && $val !== null) {
+                    $val = self::wrapFaceImage($val);
+                }
+            }
+        }
+        unset($row, $val);
+
+        return $rows;
+    }
+
+    /**
+     * Wrap raw base64 into data URI. Mirrors AttendanceService::wrapFaceImage().
+     */
+    private static function wrapFaceImage(?string $raw): ?string
+    {
+        if ($raw === null || $raw === '') return null;
+        if (str_starts_with($raw, 'data:')) return $raw;
+        $decoded = base64_decode($raw, true);
+        if ($decoded === false) return null;
+        $hex  = bin2hex(substr($decoded, 0, 4));
+        $mime = match (true) {
+            str_starts_with($hex, 'ffd8')     => 'image/jpeg',
+            str_starts_with($hex, '89504e47') => 'image/png',
+            str_starts_with($hex, '47494638') => 'image/gif',
+            str_starts_with($hex, '52494646') => 'image/webp',
+            default                            => 'image/jpeg',
+        };
+        return "data:{$mime};base64,{$raw}";
+    }
+
+    // ----------------------------------------------------------------
     // Leave Utilization Report
     // ----------------------------------------------------------------
 
