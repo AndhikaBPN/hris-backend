@@ -135,6 +135,11 @@ class Attendance
             $params['date_to'] = $filters['date_to'];
         }
 
+        if (!empty($filters['user_id'])) {
+            $sql .= " AND a.user_id = :user_id";
+            $params['user_id'] = (int) $filters['user_id'];
+        }
+
         if (!empty($filters['status']) && $filters['status'] !== 'all') {
             $sql .= " AND a.status = :status";
             $params['status'] = $filters['status'];
