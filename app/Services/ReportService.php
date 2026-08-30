@@ -124,8 +124,8 @@ class ReportService
             // Manager: 1 row per schedule — clock-in + clock-out dari session 1
             $sql = "
                 SELECT
-                    ss.date                                 AS tanggal,
-                    u.name                                  AS nama,
+                    ss.date                                 AS date,
+                    u.name                                  AS name,
                     s.name                                  AS shift,
                     a1.check_in_time                        AS clock_in_time,
                     a1.status                               AS clock_in_status,
@@ -151,25 +151,25 @@ class ReportService
             // Staff/TL: 1 row per schedule — session 1 & session 2
             $sql = "
                 SELECT
-                    ss.date                                 AS tanggal,
-                    u.name                                  AS nama,
+                    ss.date                                 AS date,
+                    u.name                                  AS name,
                     s.name                                  AS shift,
-                    a1.check_in_time                        AS sesi1_waktu,
-                    a1.status                               AS sesi1_status,
-                    a1.face_image                           AS sesi1_image,
+                    a1.check_in_time                        AS session_1_time,
+                    a1.status                               AS session_1_status,
+                    a1.face_image                           AS session_1_image,
                     CASE
                         WHEN a1.latitude IS NOT NULL AND a1.longitude IS NOT NULL
                         THEN CONCAT(ROUND(a1.latitude,6), ', ', ROUND(a1.longitude,6))
                         ELSE NULL
-                    END                                     AS sesi1_koordinat,
-                    a2.check_in_time                        AS sesi2_waktu,
-                    a2.status                               AS sesi2_status,
-                    a2.face_image                           AS sesi2_image,
+                    END                                     AS session_1_coordinate,
+                    a2.check_in_time                        AS session_2_time,
+                    a2.status                               AS session_2_status,
+                    a2.face_image                           AS session_2_image,
                     CASE
                         WHEN a2.latitude IS NOT NULL AND a2.longitude IS NOT NULL
                         THEN CONCAT(ROUND(a2.latitude,6), ', ', ROUND(a2.longitude,6))
                         ELSE NULL
-                    END                                     AS sesi2_koordinat
+                    END                                     AS session_2_coordinate
                 FROM shift_schedules ss
                 JOIN users u ON u.id = ss.user_id
                 JOIN role r ON r.id = u.role_id

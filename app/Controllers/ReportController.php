@@ -105,6 +105,7 @@ class ReportController
                 'signer_name'  => $signerName,
                 'signer_role'  => $roleMap[$authUser['role'] ?? ''] ?? ($authUser['role'] ?? ''),
                 'with_photos'  => true,
+                'row_height'   => 75,
             ];
             ExportHelper::pdf($filename, $titleMap[$roleGroup], $rows, $opts);
             return;

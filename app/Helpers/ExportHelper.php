@@ -114,11 +114,14 @@ class ExportHelper
         $withPhotos = !empty($opts['with_photos']);
 
         // Add narrow column style for image columns when with_photos = true
+        $rowHeight = isset($opts['row_height']) ? (int) $opts['row_height'] : null;
         if ($withPhotos) {
             $html .= '<style>';
-            $html .= 'table.data td.img-cell{padding:2px 4px;text-align:center;width:70px}';
-            $html .= 'table.data td.img-cell img{width:60px;height:60px;object-fit:cover;border-radius:4px}';
+            $html .= 'table.data td.img-cell{padding:2px 4px;text-align:center;width:75px}';
             $html .= 'table.data td.img-cell span{font-size:8px;color:#999}';
+            if ($rowHeight !== null) {
+                $html .= "table.data tbody td{height:{$rowHeight}px;vertical-align:middle}";
+            }
             $html .= '</style>';
         }
 
@@ -127,7 +130,7 @@ class ExportHelper
         foreach ($headers as $h) {
             if ($h === 'user_id') continue;
             $isImg = $withPhotos && str_ends_with($h, '_image');
-            $thStyle = $isImg ? ' style="width:70px;text-align:center"' : '';
+            $thStyle = $isImg ? ' style="width:75px;text-align:center"' : '';
             $html .= '<th' . $thStyle . '>' . htmlspecialchars(self::formatHeader($h)) . '</th>';
         }
         $html .= '</tr></thead><tbody>';
@@ -141,7 +144,8 @@ class ExportHelper
                 if ($isImg) {
                     $html .= '<td class="img-cell">';
                     if ($val !== null && str_starts_with((string) $val, 'data:')) {
-                        $html .= '<img src="' . $val . '" />';
+                        // Use explicit width & height attributes — mPDF ignores object-fit CSS
+                        $html .= '<img src="' . $val . '" width="70" height="70" />';
                     } else {
                         $html .= '<span>—</span>';
                     }
